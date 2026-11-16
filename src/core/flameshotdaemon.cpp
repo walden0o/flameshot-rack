@@ -30,6 +30,7 @@ bool rackPlatformSupported()
 
 #if !(defined(Q_OS_MACOS) || defined(Q_OS_WIN))
 #include <QDBusConnection>
+#include <QDBusConnectionInterface>
 #include <QDBusMessage>
 #endif
 
@@ -444,6 +445,17 @@ void FlameshotDaemon::setRackCaptureActive(bool active)
     }
 
 #if !(defined(Q_OS_MACOS) || defined(Q_OS_WIN))
+    if (!ConfigHandler().rackEnabled() || !rackPlatformSupported()) {
+        return;
+    }
+    // No rack to hide unless the daemon is already running; a blocking
+    // call here would otherwise activate it just for this.
+    const QDBusConnection bus = QDBusConnection::sessionBus();
+    if (!bus.isConnected() ||
+        !bus.interface()->isServiceRegistered(
+          QStringLiteral("org.flameshot.Flameshot"))) {
+        return;
+    }
     QDBusMessage m = createMethodCall(QStringLiteral("rackCaptureActive"));
     m << active;
     // Blocking call: the daemon replies once the rack is hidden/shown, so
