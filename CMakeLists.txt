@@ -208,7 +208,7 @@ else()
   set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}-linux")
   set(CPACK_GENERATOR "TGZ;DEB")
   set(CPACK_DEBIAN_PACKAGE_DEPENDS
-      "libqt6core6, libqt6gui6, libqt6widgets6, libqt6dbus6, libqt6svg6, libqt6network6")
+      "libqt6core6, libqt6gui6, libqt6widgets6, libqt6dbus6, libqt6svg6, libqt6network6, qt6-qpa-plugins")
   set(CPACK_SOURCE_GENERATOR TGZ)
 endif()
 
