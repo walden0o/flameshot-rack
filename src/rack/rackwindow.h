@@ -7,6 +7,7 @@
 #include "rackentry.h"
 #include "rackhoverpolicy.h"
 
+#include <QDir>
 #include <QPropertyAnimation>
 #include <QSet>
 #include <QTimer>
@@ -27,6 +28,7 @@ class RackWindow final : public QWidget
     Q_OBJECT
 public:
     RackWindow(RackContentModel& model, RackContentModel& clipboardModel);
+    ~RackWindow() override;
 
     enum class View
     {
@@ -68,6 +70,9 @@ private:
     void refresh();
     [[nodiscard]] std::optional<RackEntry> entry(const QString& id) const;
     QString exportEntry(const RackEntry& value);
+    void removeExportedFile(const QString& id);
+    void purgeExportedFiles();
+    [[nodiscard]] static QDir exportDirectory();
     void dragEntry(const QString& id);
     void openEntry(const RackEntry& selected);
     void contextMenu(const QPoint& point);

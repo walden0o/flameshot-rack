@@ -240,6 +240,7 @@ RackWindow::RackWindow(RackContentModel& model,
     });
     connect(m_clearHistory, &QAbstractButton::clicked, this, [this] {
         m_clipboardModel.clear();
+        purgeExportedFiles();
     });
     connect(m_search, &QLineEdit::textChanged, this, &RackWindow::refresh);
     connect(qApp, &QGuiApplication::screenRemoved, this, [this] {
@@ -362,9 +363,15 @@ void RackWindow::expand(bool activate)
     }
 }
 
+RackWindow::~RackWindow()
+{
+    purgeExportedFiles();
+}
+
 void RackWindow::dismiss()
 {
-    if (rackCollapseBlocked(interactionState(),
+    if (m_mode == QStringLiteral("always") ||
+        rackCollapseBlocked(interactionState(),
                             RackCollapseTrigger::Explicit)) {
         return;
     }
@@ -377,7 +384,7 @@ void RackWindow::dismiss()
 
 void RackWindow::collapse()
 {
-    if (interacting()) {
+    if (m_mode == QStringLiteral("always") || interacting()) {
         return;
     }
     m_closeTimer.stop();
@@ -548,16 +555,36 @@ std::optional<RackEntry> RackWindow::entry(const QString& id) const
     return std::nullopt;
 }
 
+QDir RackWindow::exportDirectory()
+{
+    return QDir(QStandardPaths::writableLocation(
+                  QStandardPaths::CacheLocation) +
+                QStringLiteral("/rack"));
+}
+
+void RackWindow::removeExportedFile(const QString& id)
+{
+    exportDirectory().remove(QStringLiteral("Flameshot-%1.png").arg(id));
+}
+
+void RackWindow::purgeExportedFiles()
+{
+    QDir directory = exportDirectory();
+    const auto files = directory.entryList(
+      { QStringLiteral("Flameshot-*.png") }, QDir::Files);
+    for (const QString& file : files) {
+        directory.remove(file);
+    }
+}
+
 QString RackWindow::exportEntry(const RackEntry& value)
 {
-    const QString directory =
-      QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
-      QStringLiteral("/rack");
-    if (!QDir().mkpath(directory)) {
+    const QDir directory = exportDirectory();
+    if (!QDir().mkpath(directory.path())) {
         m_hint->setText(tr("Could not prepare the image file"));
         return {};
     }
-    const QString path = QDir(directory).filePath(
+    const QString path = directory.filePath(
       QStringLiteral("Flameshot-%1.png").arg(value.id));
     if (!value.image.save(path, "PNG")) {
         m_hint->setText(tr("Could not prepare the image file"));
@@ -631,7 +658,10 @@ void RackWindow::contextMenu(const QPoint& point)
     menu.addAction(m_view == View::Clipboard ? tr("Remove from history")
                                              : tr("Remove from Rack"),
                    this,
-                   [&model, selected] { model.remove(selected->id); });
+                   [this, &model, selected] {
+                       removeExportedFile(selected->id);
+                       model.remove(selected->id);
+                   });
     menu.exec(m_list->viewport()->mapToGlobal(point));
     finishInteraction();
 }
