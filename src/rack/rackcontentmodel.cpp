@@ -138,6 +138,13 @@ void RackContentModel::trim()
     m_entries.resize(keep);
 }
 
+void RackContentModel::restore(QVector<RackEntry> entries)
+{
+    m_entries = std::move(entries);
+    trim();
+    emit changed();
+}
+
 void RackContentModel::remove(const QString& id)
 {
     const auto removed =

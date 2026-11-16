@@ -8,8 +8,9 @@
 #include <QObject>
 #include <QVector>
 
-// In-memory model for rack screenshots and clipboard history. Entries are
-// never written to disk and the model trims itself to the byte cap.
+// In-memory model for rack screenshots and clipboard history. Persistence
+// lives in RackService; the model only knows how to restore entries and
+// trims itself to the byte cap.
 class RackContentModel final : public QObject
 {
     Q_OBJECT
@@ -25,6 +26,8 @@ public:
     [[nodiscard]] bool contains(const QString& id) const;
 
     bool add(QString text, QImage image = {});
+    // Bulk-load persisted entries (newest first) without re-hashing.
+    void restore(QVector<RackEntry> entries);
     void setLimit(int limit);
     void remove(const QString& id);
     void clear();

@@ -26,6 +26,7 @@ public:
 
     void addScreenshot(const QImage& image);
     void setEnabled(bool enabled);
+    void setClipboardHistoryEnabled(bool enabled);
     [[nodiscard]] bool enabled() const;
     [[nodiscard]] RackWindow* window() const;
     [[nodiscard]] RackContentModel* screenshotsModel();
@@ -46,6 +47,7 @@ private:
     RackWindow* m_window;
     bool m_enabled;
     bool m_clipboardBlocked;
+    bool m_storageLoaded;
 
     static RackService* m_instance;
 };
