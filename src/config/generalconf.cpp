@@ -153,8 +153,8 @@ void GeneralConf::_updateComponents(bool allowEmptySavePath)
     m_rackClipboardHistory->setChecked(config.rackClipboardHistory());
     m_rackDisplayMode->setCurrentIndex(
       config.rackDisplayMode() == QStringLiteral("always") ? 1 : 0);
-    m_rackPosition->setCurrentIndex(std::max(
-      0, m_rackPosition->findData(config.rackPosition())));
+    m_rackPosition->setCurrentIndex(
+      std::max(0, m_rackPosition->findData(config.rackPosition())));
 #endif
 }
 
