@@ -172,7 +172,15 @@ execute_process(
 if(NOT GIT_COMMIT_COUNT)
   set(GIT_COMMIT_COUNT 1)
 endif()
-set(CPACK_DEBIAN_PACKAGE_RELEASE "devin.${GIT_COMMIT_COUNT}")
+execute_process(
+  COMMAND git rev-parse --short HEAD
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_SHORT_HASH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET)
+# The hash keeps versions unique even on depth-one checkouts where the
+# commit count cannot grow.
+set(CPACK_DEBIAN_PACKAGE_RELEASE "devin.${GIT_COMMIT_COUNT}.${GIT_SHORT_HASH}")
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://flameshot.org")
 set(CPACK_PACKAGE_CONTACT "flameshot-org developers <info@flameshot.org>")
 set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/data/img/app/org.flameshot.Flameshot.svg") # TODO: Can any generator make

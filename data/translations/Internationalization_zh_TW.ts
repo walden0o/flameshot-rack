@@ -1364,6 +1364,54 @@ Please solve them manually in the configuration file.</source>
         <source>Bypass the freedesktop portal and use Qt&apos;s native X11 screen capture. Enable this if your window manager lacks xdg-desktop-portal (e.g. xmonad, i3). Only effective on X11; ignored on Wayland.</source>
         <translation>繞過 freedesktop portal 並使用 Qt 原生 X11 螢幕截圖。若您的視窗管理員缺少 xdg-desktop-portal（例如 xmonad、i3），請啟用此選項。僅在 X11 上有效；在 Wayland 上會被忽略。</translation>
     </message>
+    <message>
+        <source>Startup &amp; system</source>
+        <translation>啟動與系統</translation>
+    </message>
+    <message>
+        <source>Capture</source>
+        <translation>截圖</translation>
+    </message>
+    <message>
+        <source>Clipboard &amp;&amp; saving</source>
+        <translation>剪貼簿與儲存</translation>
+    </message>
+    <message>
+        <source>Upload</source>
+        <translation>上傳</translation>
+    </message>
+    <message>
+        <source>Interface</source>
+        <translation>介面</translation>
+    </message>
+    <message>
+        <source>Rack</source>
+        <translation>晾衣架</translation>
+    </message>
+    <message>
+        <source>Show screenshot rack at the screen edge</source>
+        <translation>在螢幕邊緣顯示截圖晾衣架</translation>
+    </message>
+    <message>
+        <source>Screenshots are hung on a clothesline at the top screen edge</source>
+        <translation>截圖會掛在螢幕頂部邊緣的晾衣繩上</translation>
+    </message>
+    <message>
+        <source>Expand on hover</source>
+        <translation>懸停展開</translation>
+    </message>
+    <message>
+        <source>Always expanded</source>
+        <translation>始終展開</translation>
+    </message>
+    <message>
+        <source>Keep clipboard history in the rack</source>
+        <translation>在晾衣架中保留剪貼簿歷史</translation>
+    </message>
+    <message>
+        <source>Memory only, skipped for passwords; images can be re-copied</source>
+        <translation>僅保存在記憶體中，自動略過密碼管理器內容；圖片可重新複製</translation>
+    </message>
 </context>
 <context>
     <name>HistoryWidget</name>
@@ -3322,6 +3370,105 @@ You may need to escape the &apos;#&apos; sign as in &apos;\#FFF&apos;</source>
         <location filename="../../build/_deps/qtcolorwidgets-src/src/QtColorWidgets/swatch.cpp" line="864"/>
         <source>%1 (%2)</source>
         <translation>%1 (%2)</translation>
+    </message>
+</context>
+<context>
+    <name>RackWindow</name>
+    <message>
+        <source>Rack</source>
+        <translation>晾衣架</translation>
+    </message>
+    <message>
+        <source>Screenshot Rack</source>
+        <translation>截圖晾衣架</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>設定</translation>
+    </message>
+    <message>
+        <source>Collapse</source>
+        <translation>收起</translation>
+    </message>
+    <message>
+        <source>Screenshots</source>
+        <translation>截圖</translation>
+    </message>
+    <message>
+        <source>Clipboard</source>
+        <translation>剪貼簿</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>清除</translation>
+    </message>
+    <message>
+        <source>Search clipboard history</source>
+        <translation>搜尋剪貼簿歷史</translation>
+    </message>
+    <message>
+        <source>Clipboard history</source>
+        <translation>剪貼簿歷史</translation>
+    </message>
+    <message>
+        <source>Rack screenshots</source>
+        <translation>晾衣架截圖</translation>
+    </message>
+    <message>
+        <source>Text copied to clipboard</source>
+        <translation>文字已複製到剪貼簿</translation>
+    </message>
+    <message>
+        <source>Copied to clipboard</source>
+        <translation>已複製到剪貼簿</translation>
+    </message>
+    <message>
+        <source>Click to copy again; drag to share</source>
+        <translation>點擊複製；拖曳分享</translation>
+    </message>
+    <message>
+        <source>Click to copy image; drag to share</source>
+        <translation>點擊複製圖片；拖曳分享</translation>
+    </message>
+    <message>
+        <source>Copied text and images appear here</source>
+        <translation>複製的文字和圖片會顯示在這裡</translation>
+    </message>
+    <message>
+        <source>No matching clipboard items</source>
+        <translation>沒有符合的剪貼簿記錄</translation>
+    </message>
+    <message>
+        <source>Clipboard history is off. Turn it on in </source>
+        <translation>剪貼簿歷史已關閉，請在設定中開啟</translation>
+    </message>
+    <message>
+        <source>Your next screenshot will appear here</source>
+        <translation>你的下一張截圖會出現在這裡</translation>
+    </message>
+    <message>
+        <source>Could not prepare the image file</source>
+        <translation>無法準備圖片檔案</translation>
+    </message>
+    <message>
+        <source>Copy image</source>
+        <translation>複製圖片</translation>
+    </message>
+    <message>
+        <source>Copy text</source>
+        <translation>複製文字</translation>
+    </message>
+    <message>
+        <source>Open image</source>
+        <translation>開啟圖片</translation>
+    </message>
+    <message>
+        <source>Remove from history</source>
+        <translation>從歷史中移除</translation>
+    </message>
+    <message>
+        <source>Remove from Rack</source>
+        <translation>從晾衣架移除</translation>
     </message>
 </context>
 </TS>
