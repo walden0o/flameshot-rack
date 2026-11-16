@@ -1,5 +1,7 @@
 #include "flameshotdaemon.h"
 #include "core/flameshot.h"
+#include "rack/rackservice.h"
+#include "rack/rackwindow.h"
 #include "tools/pin/pinwidget.h"
 #include "utils/abstractlogger.h"
 #include "utils/confighandler.h"
@@ -88,6 +90,7 @@ FlameshotDaemon::FlameshotDaemon()
   , m_hostingClipboard(false)
   , m_clipboardSignalBlocked(false)
   , m_trayIcon(nullptr)
+  , m_rack(nullptr)
 #if !defined(DISABLE_UPDATE_CHECKER)
   , m_appLatestVersion(QStringLiteral(APP_VERSION).replace("v", ""))
   , m_showManualCheckAppUpdateStatus(false)
@@ -112,6 +115,12 @@ FlameshotDaemon::FlameshotDaemon()
                 ConfigHandler config;
                 enableTrayIcon(!config.disabledTrayIcon());
                 m_persist = !config.autoCloseIdleDaemon();
+                if (m_rack) {
+                    m_rack->setEnabled(config.rackEnabled());
+                    m_rack->window()->setDisplayMode(config.rackDisplayMode());
+                    m_rack->window()->setClipboardHistoryEnabled(
+                      config.rackClipboardHistory());
+                }
             });
 
 #if !defined(DISABLE_UPDATE_CHECKER)
@@ -128,6 +137,9 @@ void FlameshotDaemon::start()
         // Tray icon needs FlameshotDaemon::instance() to be non-null
         m_instance->initTrayIcon();
         qApp->setQuitOnLastWindowClosed(false);
+        if (ConfigHandler().rackEnabled()) {
+            m_instance->attachRackService();
+        }
     }
 }
 
@@ -151,6 +163,33 @@ void FlameshotDaemon::createPin(const QPixmap& capture, QRect geometry)
 #else
     stream << capture << geometry << capture.devicePixelRatio();
     QDBusMessage m = createMethodCall(QStringLiteral("attachPin"));
+    m << data;
+    call(m);
+#endif
+}
+
+void FlameshotDaemon::hangOnRack(const QPixmap& capture)
+{
+    if (!ConfigHandler().rackEnabled()) {
+        return;
+    }
+    if (instance()) {
+        instance()->attachRack(capture);
+        return;
+    }
+
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+
+#if defined(USE_KDSINGLEAPPLICATION) &&                                        \
+  (defined(Q_OS_MACOS) || defined(Q_OS_WIN))
+    auto kdsa = KDSingleApplication(QStringLiteral("org.flameshot.Flameshot"));
+    stream << QStringLiteral("attachRack") << capture
+           << capture.devicePixelRatio();
+    kdsa.sendMessage(data);
+#else
+    stream << capture << capture.devicePixelRatio();
+    QDBusMessage m = createMethodCall(QStringLiteral("hangScreenshot"));
     m << data;
     call(m);
 #endif
@@ -332,6 +371,31 @@ void FlameshotDaemon::attachPin(const QPixmap& pixmap, QRect geometry)
     pinWidget->activateWindow();
 }
 
+void FlameshotDaemon::attachRackService()
+{
+    m_rack = RackService::instance();
+    m_rack->ensureStarted();
+    connect(m_rack, &RackService::settingsRequested, this, [] {
+        Flameshot::instance()->config();
+    });
+    if (QWidget* host = m_rack->hostWidget()) {
+        m_widgets.append(host);
+        connect(host, &QObject::destroyed, this, [this]() {
+            m_widgets.removeOne(m_rack ? m_rack->hostWidget() : nullptr);
+            m_rack = nullptr;
+            quitIfIdle();
+        });
+    }
+}
+
+void FlameshotDaemon::attachRack(const QPixmap& pixmap)
+{
+    if (!m_rack) {
+        attachRackService();
+    }
+    m_rack->addScreenshot(pixmap.toImage());
+}
+
 void FlameshotDaemon::attachScreenshotToClipboard(const QPixmap& pixmap)
 {
     m_hostingClipboard = true;
@@ -355,6 +419,19 @@ void FlameshotDaemon::attachPin(const QByteArray& data)
     readPin(stream, pixmap, geometry);
 
     attachPin(pixmap, geometry);
+}
+
+void FlameshotDaemon::attachRack(const QByteArray& data)
+{
+    QDataStream stream(data);
+    QPixmap pixmap;
+    qreal devicePixelRatio = 0;
+    stream >> pixmap >> devicePixelRatio;
+    if (stream.status() == QDataStream::Ok && devicePixelRatio > 0) {
+        pixmap.setDevicePixelRatio(devicePixelRatio);
+    }
+
+    attachRack(pixmap);
 }
 
 void FlameshotDaemon::attachScreenshotToClipboard(const QByteArray& screenshot)
@@ -502,6 +579,19 @@ void FlameshotDaemon::messageReceivedFromSecondaryInstance(
             FlameshotDaemon::instance()->attachPin(capture, geometry);
         } else {
             qWarning() << "Received \"attachPin\" from second instance, but "
+                          "pixmap is empty!";
+        }
+    } else if (methodCall == QStringLiteral("attachRack")) {
+        QPixmap capture;
+        qreal devicePixelRatio = 0;
+        stream >> capture >> devicePixelRatio;
+        if (devicePixelRatio > 0) {
+            capture.setDevicePixelRatio(devicePixelRatio);
+        }
+        if (!capture.isNull()) {
+            FlameshotDaemon::instance()->attachRack(capture);
+        } else {
+            qWarning() << "Received \"attachRack\" from second instance, but "
                           "pixmap is empty!";
         }
     } else if (methodCall == QStringLiteral("attachScreenshotToClipboard")) {

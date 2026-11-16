@@ -3,6 +3,8 @@
 
 #include "flameshot.h"
 #include "core/flameshotdaemon.h"
+#include "rack/rackservice.h"
+#include "rack/rackwindow.h"
 #if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
 #include "qhotkey.h"
 #endif
@@ -183,6 +185,14 @@ CaptureWidget* Flameshot::gui(const CaptureRequest& req)
         }
 
         m_captureWindow = new CaptureWidget(request);
+        // Hide the rack while grabbing pixels, or the capsule would be
+        // captured into every fullscreen shot.
+        if (auto* rack = RackService::instance()->window()) {
+            rack->setCaptureActive(QStringLiteral("capture"), true);
+            connect(m_captureWindow, &QObject::destroyed, rack, [rack] {
+                rack->setCaptureActive(QStringLiteral("capture"), false);
+            });
+        }
 
 #ifdef Q_OS_WIN
         m_captureWindow->show();
@@ -544,6 +554,7 @@ void Flameshot::exportCapture(const QPixmap& capture,
 #endif
 
     if (!(tasks & CR::UPLOAD)) {
+        FlameshotDaemon::hangOnRack(capture);
         emit captureTaken(capture);
     }
 }
