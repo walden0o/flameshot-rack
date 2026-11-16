@@ -161,6 +161,18 @@ add_subdirectory(src)
 set(CPACK_PACKAGE_VENDOR "flameshot-org")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Powerful yet simple to use screenshot software.")
 set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+# Stamp every build with a monotonically increasing Debian revision so
+# `apt install ./flameshot-*.deb` always treats a rebuild as an upgrade.
+execute_process(
+  COMMAND git rev-list --count HEAD
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_COMMIT_COUNT
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET)
+if(NOT GIT_COMMIT_COUNT)
+  set(GIT_COMMIT_COUNT 1)
+endif()
+set(CPACK_DEBIAN_PACKAGE_RELEASE "devin.${GIT_COMMIT_COUNT}")
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://flameshot.org")
 set(CPACK_PACKAGE_CONTACT "flameshot-org developers <info@flameshot.org>")
 set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/data/img/app/org.flameshot.Flameshot.svg") # TODO: Can any generator make
