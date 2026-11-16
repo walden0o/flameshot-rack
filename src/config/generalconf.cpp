@@ -62,6 +62,7 @@ GeneralConf::GeneralConf(QWidget* parent)
 #endif
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
     initUseX11LegacyScreenshot();
+    initRackSettings();
 #endif
 #ifdef ENABLE_IMGUR
     initCopyAndCloseAfterUpload();
@@ -137,6 +138,10 @@ void GeneralConf::_updateComponents(bool allowEmptySavePath)
 #endif
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
     m_useX11LegacyScreenshot->setChecked(config.useX11LegacyScreenshot());
+    m_rackEnabled->setChecked(config.rackEnabled());
+    m_rackClipboardHistory->setChecked(config.rackClipboardHistory());
+    m_rackDisplayMode->setCurrentIndex(
+      config.rackDisplayMode() == QStringLiteral("always") ? 1 : 0);
 #endif
 }
 
@@ -680,6 +685,51 @@ void GeneralConf::initUseJpgForClipboard()
 #endif
 
     m_scrollAreaLayout->addWidget(m_useJpgForClipboard);
+}
+
+void GeneralConf::initRackSettings()
+{
+#if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
+    auto* group = new QGroupBox(tr("Rack"), this);
+    auto* layout = new QVBoxLayout(group);
+
+    m_rackEnabled =
+      new QCheckBox(tr("Show screenshot rack at the screen edge"), group);
+    m_rackEnabled->setToolTip(
+      tr("Screenshots are hung on a clothesline at the top screen edge"));
+    connect(m_rackEnabled, &QCheckBox::clicked, this, [](bool checked) {
+        ConfigHandler().setRackEnabled(checked);
+    });
+    layout->addWidget(m_rackEnabled);
+
+    m_rackDisplayMode = new QComboBox(group);
+    m_rackDisplayMode->addItem(tr("Expand on hover"),
+                             QStringLiteral("hover"));
+    m_rackDisplayMode->addItem(tr("Always expanded"),
+                             QStringLiteral("always"));
+    connect(m_rackDisplayMode,
+            &QComboBox::currentIndexChanged,
+            this,
+            [this]() {
+                ConfigHandler().setRackDisplayMode(
+                  m_rackDisplayMode->currentData().toString());
+            });
+    layout->addWidget(m_rackDisplayMode);
+
+    m_rackClipboardHistory =
+      new QCheckBox(tr("Keep clipboard history in the rack"), group);
+    m_rackClipboardHistory->setToolTip(tr(
+      "Memory only, skipped for passwords; images can be re-copied"));
+    connect(m_rackClipboardHistory,
+            &QCheckBox::clicked,
+            this,
+            [](bool checked) {
+                ConfigHandler().setRackClipboardHistory(checked);
+            });
+    layout->addWidget(m_rackClipboardHistory);
+
+    m_scrollAreaLayout->addWidget(group);
+#endif
 }
 
 void GeneralConf::saveAfterCopyChanged(bool checked)

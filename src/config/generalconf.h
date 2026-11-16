@@ -87,6 +87,7 @@ private:
     void initCopyPathAfterSave();
     void initHistoryConfirmationToDelete();
     void initPredefinedColorPaletteLarge();
+    void initRackSettings();
     void initSaveAfterCopy();
     void initScrollArea();
     void initShowDesktopNotification();
@@ -153,6 +154,9 @@ private:
     QCheckBox* m_screenshotPathFixedCheck;
     QCheckBox* m_historyConfirmationToDelete;
     QCheckBox* m_useJpgForClipboard;
+    QCheckBox* m_rackEnabled;
+    QCheckBox* m_rackClipboardHistory;
+    QComboBox* m_rackDisplayMode;
     QSpinBox* m_uploadHistoryMax;
     QSpinBox* m_undoLimit;
     QComboBox* m_setSaveAsFileExtension;
