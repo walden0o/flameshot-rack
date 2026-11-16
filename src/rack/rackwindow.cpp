@@ -75,7 +75,9 @@ public:
         // angles.
         const qreal tilt = (index.row() % 4 - 1.5) * 1.6;
 
-        painter->setPen(QPen(option.palette.color(QPalette::Mid), 1.0));
+        QPen pinString(option.palette.color(QPalette::Mid), 1.0);
+        pinString.setCapStyle(Qt::RoundCap);
+        painter->setPen(pinString);
         painter->drawLine(ropePoint, pinPoint);
 
         painter->translate(pinPoint);
@@ -91,7 +93,12 @@ public:
 
         const bool selected = option.state & QStyle::State_Selected;
         const bool hovered = option.state & QStyle::State_MouseOver;
-        painter->setBrush(option.palette.color(QPalette::Base));
+        QLinearGradient paperGrad(paper.topLeft(), paper.bottomLeft());
+        paperGrad.setColorAt(0, option.palette.color(QPalette::Base));
+        paperGrad.setColorAt(
+          1,
+          option.palette.color(QPalette::Base).darker(104));
+        painter->setBrush(paperGrad);
         painter->setPen(QPen(selected
                                ? option.palette.color(QPalette::Highlight)
                                : option.palette.color(QPalette::Mid),
@@ -705,10 +712,14 @@ void RackWindow::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
+    const QRectF bodyRect = QRectF(rect()).adjusted(0.5, -12, -0.5, -0.5);
+    QLinearGradient bodyGrad(bodyRect.topLeft(), bodyRect.bottomLeft());
+    const QColor windowColor = palette().color(QPalette::Window);
+    bodyGrad.setColorAt(0, windowColor.lighter(106));
+    bodyGrad.setColorAt(1, windowColor.darker(104));
     painter.setPen(palette().color(QPalette::Mid));
-    painter.setBrush(palette().color(QPalette::Window));
-    painter.drawRoundedRect(
-      QRectF(rect()).adjusted(0.5, -12, -0.5, -0.5), 18, 18);
+    painter.setBrush(bodyGrad);
+    painter.drawRoundedRect(bodyRect, 18, 18);
     if (m_expanded && m_view == View::Screenshots && m_list->count() > 0) {
         // The clothesline: one rope anchored across the cards row. Delegates
         // drop a string and pin from each card up to this line.
@@ -718,9 +729,14 @@ void RackWindow::paintEvent(QPaintEvent*)
           RackRopeOffset;
         const qreal left = m_body->geometry().left() + 14;
         const qreal right = m_body->geometry().right() - 14;
+        // Gentle sag makes the rope read as a rope, not a divider.
         painter.setPen(QPen(palette().color(QPalette::Dark), 1.4));
         painter.setBrush(Qt::NoBrush);
-        painter.drawLine(QPointF(left, top), QPointF(right, top));
+        QPainterPath rope;
+        rope.moveTo(QPointF(left, top));
+        rope.quadTo(
+          QPointF((left + right) / 2.0, top + 9), QPointF(right, top));
+        painter.drawPath(rope);
         painter.setPen(Qt::NoPen);
         painter.setBrush(palette().color(QPalette::Dark));
         painter.drawEllipse(QPointF(left, top), 2.6, 2.6);
