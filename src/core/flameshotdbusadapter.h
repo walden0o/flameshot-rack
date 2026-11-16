@@ -21,4 +21,5 @@ public slots:
                                          const QString& notification);
     Q_NOREPLY void attachPin(const QByteArray& data);
     Q_NOREPLY void hangScreenshot(const QByteArray& data);
+    bool rackCaptureActive(bool active);
 };

@@ -36,3 +36,9 @@ void FlameshotDBusAdapter::hangScreenshot(const QByteArray& data)
 {
     FlameshotDaemon::instance()->attachRack(data);
 }
+
+bool FlameshotDBusAdapter::rackCaptureActive(bool active)
+{
+    FlameshotDaemon::instance()->applyRackCaptureActive(active);
+    return true;
+}

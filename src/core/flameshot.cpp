@@ -184,15 +184,13 @@ CaptureWidget* Flameshot::gui(const CaptureRequest& req)
             return nullptr;
         }
 
+        // Hide the rack before the widget grabs pixels, or the capsule
+        // would be captured into every screenshot.
+        FlameshotDaemon::setRackCaptureActive(true);
         m_captureWindow = new CaptureWidget(request);
-        // Hide the rack while grabbing pixels, or the capsule would be
-        // captured into every fullscreen shot.
-        if (auto* rack = RackService::instance()->window()) {
-            rack->setCaptureActive(QStringLiteral("capture"), true);
-            connect(m_captureWindow, &QObject::destroyed, rack, [rack] {
-                rack->setCaptureActive(QStringLiteral("capture"), false);
-            });
-        }
+        connect(m_captureWindow, &QObject::destroyed, qApp, [] {
+            FlameshotDaemon::setRackCaptureActive(false);
+        });
 
 #ifdef Q_OS_WIN
         m_captureWindow->show();
@@ -226,6 +224,7 @@ void Flameshot::screen(CaptureRequest req, const int screenNumber)
     QPixmap p;
     QRect geometry;
 
+    FlameshotDaemon::setRackCaptureActive(true);
     if (screenNumber < 0) {
         ScreenGrabber grabber;
         p = grabber.grabEntireDesktop(ok);
@@ -249,6 +248,7 @@ void Flameshot::screen(CaptureRequest req, const int screenNumber)
             geometry = ScreenGrabber().screenGeometry(screen);
         }
     }
+    FlameshotDaemon::setRackCaptureActive(false);
 
     if (ok) {
         QRect region = req.initialSelection();
@@ -277,7 +277,9 @@ void Flameshot::full(const CaptureRequest& req)
     }
 
     bool ok = true;
+    FlameshotDaemon::setRackCaptureActive(true);
     QPixmap p(ScreenGrabber().grabFullDesktop(ok));
+    FlameshotDaemon::setRackCaptureActive(false);
     if (ok) {
         QRect selection; // `flameshot full` does not support region selection
         exportCapture(p, selection, req);
