@@ -98,7 +98,9 @@ ScreenGrabber::PortalStatus ScreenGrabber::freeDesktopPortal(
             QFile imgFile(uriString);
             imgFile.remove();
         } else {
-            cancelled = true;
+            // Response status: 1 = user declined the dialog (honor the
+            // refusal); 2 = backend error (still eligible for fallback).
+            cancelled = (status == 1);
         }
         loop.quit();
     };
