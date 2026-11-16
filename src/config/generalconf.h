@@ -87,6 +87,10 @@ private:
     void initCopyPathAfterSave();
     void initHistoryConfirmationToDelete();
     void initPredefinedColorPaletteLarge();
+    void initRackSettings();
+    void beginGroup(const QString& title);
+    void addSetting(QWidget* widget);
+    void addSettingLayout(QLayout* layout);
     void initSaveAfterCopy();
     void initScrollArea();
     void initShowDesktopNotification();
@@ -124,6 +128,7 @@ private:
     // class members
     QVBoxLayout* m_layout;
     QVBoxLayout* m_scrollAreaLayout;
+    QVBoxLayout* m_groupLayout;
     QScrollArea* m_scrollArea;
     QCheckBox* m_sysNotifications;
     QCheckBox* m_abortNotifications;
@@ -153,6 +158,10 @@ private:
     QCheckBox* m_screenshotPathFixedCheck;
     QCheckBox* m_historyConfirmationToDelete;
     QCheckBox* m_useJpgForClipboard;
+    QCheckBox* m_rackEnabled;
+    QCheckBox* m_rackClipboardHistory;
+    QComboBox* m_rackDisplayMode;
+    QComboBox* m_rackPosition;
     QSpinBox* m_uploadHistoryMax;
     QSpinBox* m_undoLimit;
     QComboBox* m_setSaveAsFileExtension;

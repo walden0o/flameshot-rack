@@ -87,18 +87,23 @@ ScreenGrabber::PortalStatus ScreenGrabber::freeDesktopPortal(
 
     QEventLoop loop;
 
-    const auto onPortalResponse = [&res, &loop, this](uint status,
-                                                      const QVariantMap& map) {
-        if (status == 0) {
-            // Parse this as URI to handle unicode properly
-            QUrl uri = map.value("uri").toString();
-            QString uriString = uri.toLocalFile();
-            res = QPixmap(uriString);
-            QFile imgFile(uriString);
-            imgFile.remove();
-        }
-        loop.quit();
-    };
+    bool cancelled = false;
+    const auto onPortalResponse =
+      [&res, &loop, &cancelled, this](uint status, const QVariantMap& map) {
+          if (status == 0) {
+              // Parse this as URI to handle unicode properly
+              QUrl uri = map.value("uri").toString();
+              QString uriString = uri.toLocalFile();
+              res = QPixmap(uriString);
+              QFile imgFile(uriString);
+              imgFile.remove();
+          } else {
+              // Response status: 1 = user declined the dialog (honor the
+              // refusal); 2 = backend error (still eligible for fallback).
+              cancelled = (status == 1);
+          }
+          loop.quit();
+      };
 
     // prevent racy situations and listen before calling screenshot
     QMetaObject::Connection conn = QObject::connect(
@@ -169,7 +174,9 @@ ScreenGrabber::PortalStatus ScreenGrabber::freeDesktopPortal(
     }
 
     if (res.isNull()) {
-        return PortalStatus::Failed;
+        // A nonzero Response means the user declined the portal dialog:
+        // honor the refusal instead of falling back to a silent grab.
+        return cancelled ? PortalStatus::Cancelled : PortalStatus::Failed;
     }
 
 #ifdef FLAMESHOT_DEBUG_CAPTURE
@@ -204,10 +211,13 @@ QPixmap ScreenGrabber::unixScreenshot(bool& ok)
     const PortalStatus status = freeDesktopPortal(screenshot, portalError);
     ok = status == PortalStatus::Success;
 
-    if (status == PortalStatus::Unavailable && !m_info.waylandDetected()) {
+    if ((status == PortalStatus::Unavailable ||
+         status == PortalStatus::Failed) &&
+        !m_info.waylandDetected()) {
         // The portal cannot take screenshots here, which is common on X11
         // window managers such as i3 or XMonad, so take the native X11
-        // grab instead.
+        // grab instead. An installed-but-unresponsive portal (timeout) is
+        // equally useless on X11, where the direct grab always works.
         AbstractLogger::info(AbstractLogger::Stderr | AbstractLogger::LogFile)
           << tr("Screenshot portal unavailable, using direct X11 capture");
         screenshot = x11LegacyScreenshot();

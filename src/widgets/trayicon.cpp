@@ -135,6 +135,16 @@ void TrayIcon::initMenu()
             &QAction::triggered,
             Flameshot::instance(),
             &Flameshot::launcher);
+    m_rackAction = new QAction(tr("&Rack"), this);
+    m_rackAction->setCheckable(true);
+    m_rackAction->setChecked(ConfigHandler().rackEnabled());
+    // The rack only works on X11 (global pointer polling + always-on-top).
+    m_rackAction->setVisible(QGuiApplication::platformName() ==
+                             QLatin1String("xcb"));
+    connect(m_rackAction, &QAction::toggled, this, [](bool checked) {
+        ConfigHandler().setRackEnabled(checked);
+    });
+
     auto* configAction = new QAction(tr("&Configuration"), this);
     connect(configAction,
             &QAction::triggered,
@@ -192,6 +202,7 @@ void TrayIcon::initMenu()
 
     m_menu->addAction(m_captureAction);
     m_menu->addAction(m_launcherAction);
+    m_menu->addAction(m_rackAction);
     m_menu->addSeparator();
 #ifdef ENABLE_IMGUR
     m_menu->addAction(recentAction);

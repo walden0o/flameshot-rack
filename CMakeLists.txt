@@ -161,6 +161,26 @@ add_subdirectory(src)
 set(CPACK_PACKAGE_VENDOR "flameshot-org")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Powerful yet simple to use screenshot software.")
 set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+# Stamp every build with a monotonically increasing Debian revision so
+# `apt install ./flameshot-*.deb` always treats a rebuild as an upgrade.
+execute_process(
+  COMMAND git rev-list --count HEAD
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_COMMIT_COUNT
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET)
+if(NOT GIT_COMMIT_COUNT)
+  set(GIT_COMMIT_COUNT 1)
+endif()
+execute_process(
+  COMMAND git rev-parse --short HEAD
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_SHORT_HASH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET)
+# The hash keeps versions unique even on depth-one checkouts where the
+# commit count cannot grow.
+set(CPACK_DEBIAN_PACKAGE_RELEASE "devin.${GIT_COMMIT_COUNT}.${GIT_SHORT_HASH}")
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://flameshot.org")
 set(CPACK_PACKAGE_CONTACT "flameshot-org developers <info@flameshot.org>")
 set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/data/img/app/org.flameshot.Flameshot.svg") # TODO: Can any generator make
@@ -206,7 +226,9 @@ elseif(APPLE)
   set(CPACK_GENERATOR ZIP)
 else()
   set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}-linux")
-  set(CPACK_GENERATOR TGZ)
+  set(CPACK_GENERATOR "TGZ;DEB")
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS
+      "libqt6core6, libqt6gui6, libqt6widgets6, libqt6dbus6, libqt6svg6, libqt6network6, qt6-qpa-plugins")
   set(CPACK_SOURCE_GENERATOR TGZ)
 endif()
 

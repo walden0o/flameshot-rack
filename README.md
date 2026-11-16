@@ -47,7 +47,21 @@
   </p>
 </div>
 
+## About this fork
 
+This is an **independent fork** of [flameshot](https://github.com/flameshot-org/flameshot) — not a drop-in replacement and not affiliated with the flameshot project.
+
+It adds a **Rack**: a thin capsule pinned at the top edge of the screen that expands on hover into a clothesline of screenshot cards, plus an optional in-memory clipboard history.
+
+Fork-specific features:
+
+- Screenshots are automatically hung on the Rack after capture
+- Hover the top-right screen edge to expand; the strip collapses when you leave
+- Click a card to copy it back to the clipboard; drag it out to share it as a PNG file
+- Clipboard history tab (opt-in, memory-only, skips password-manager clipboard data)
+- Rack can be toggled from the tray menu; `rackEnabled`, `rackDisplayMode` (`hover`/`always`) and `rackClipboardHistory` in `flameshot.ini`
+
+X11 only for the Rack. Upstream flameshot changes are pulled in manually; the fork remains GPL-3.0 licensed like upstream.
 
 ## Preview
 

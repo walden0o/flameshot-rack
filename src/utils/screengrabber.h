@@ -24,7 +24,8 @@ public:
     {
         Success,
         Unavailable,
-        Failed
+        Failed,
+        Cancelled
     };
     QPixmap grabEntireDesktop(bool& ok, int preSelectedMonitor = -1);
     QPixmap grabFullDesktop(bool& ok);

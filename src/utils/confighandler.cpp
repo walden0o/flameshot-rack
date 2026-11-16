@@ -94,6 +94,10 @@ static QMap<class QString, QSharedPointer<ValueHandler>>
     OPTION("copyPathAfterSave"           ,Bool               ( false         )),
     OPTION("antialiasingPinZoom"         ,Bool               ( true          )),
     OPTION("useJpgForClipboard"          ,Bool               ( false         )),
+    OPTION("rackEnabled"                 ,Bool               ( true          )),
+    OPTION("rackDisplayMode"             ,String             ( "hover"       )),
+    OPTION("rackPosition"                ,String             ( "right"       )),
+    OPTION("rackClipboardHistory"        ,Bool               ( false         )),
 #if defined(Q_OS_MACOS)
     OPTION("useNativeFullscreen"         ,Bool               ( false         )),
 #endif
@@ -151,7 +155,7 @@ static QMap<class QString, QSharedPointer<ValueHandler>>
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
     // Bypass freedesktop portal and use Qt's native X11
     // screenshot method. Intended for WMs without xdg-desktop-portal.
-    OPTION("useX11LegacyScreenshot"      ,Bool               ( false         )),
+    OPTION("useX11LegacyScreenshot"      ,Bool               ( true          )),
 #endif
 };
 

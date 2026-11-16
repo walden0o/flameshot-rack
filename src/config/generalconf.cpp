@@ -9,6 +9,7 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QGroupBox>
+#include <QHBoxLayout>
 #include <QImageWriter>
 #include <QLabel>
 #include <QLineEdit>
@@ -25,6 +26,7 @@ GeneralConf::GeneralConf(QWidget* parent)
   : QWidget(parent)
   , m_historyConfirmationToDelete(nullptr)
   , m_undoLimit(nullptr)
+  , m_groupLayout(nullptr)
 {
     m_layout = new QVBoxLayout(this);
     m_layout->setAlignment(Qt::AlignTop);
@@ -33,6 +35,7 @@ GeneralConf::GeneralConf(QWidget* parent)
     // It must be initialized before the checkboxes.
     initScrollArea();
 
+    beginGroup(tr("Startup && system"));
     initAutostart();
     initAutoCloseIdleDaemon();
     initShowTrayIcon();
@@ -44,16 +47,11 @@ GeneralConf::GeneralConf(QWidget* parent)
     initShowStartupLaunchMessage();
     initShowQuitPrompt();
     initAllowMultipleGuiInstances();
+
+    beginGroup(tr("Capture"));
     initSaveLastRegion();
     initShowHelp();
     initShowSidePanelButton();
-    initUseJpgForClipboard();
-    initCopyOnDoubleClick();
-    initSaveAfterCopy();
-    initCopyPathAfterSave();
-    initAntialiasingPinZoom();
-    initUndoLimit();
-    initInsecurePixelate();
 #if !defined(Q_OS_MACOS)
     initCaptureActiveMonitor();
 #endif
@@ -63,23 +61,37 @@ GeneralConf::GeneralConf(QWidget* parent)
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
     initUseX11LegacyScreenshot();
 #endif
+    initShowMagnifier();
+    initSquareMagnifier();
+    initShowSelectionGeometry();
+
+    beginGroup(tr("Clipboard && saving"));
+    initUseJpgForClipboard();
+    initCopyOnDoubleClick();
+    initSaveAfterCopy();
+    initCopyPathAfterSave();
+
+#if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
+    initRackSettings();
+#endif
 #ifdef ENABLE_IMGUR
+    beginGroup(tr("Upload"));
     initCopyAndCloseAfterUpload();
     initUploadWithoutConfirmation();
     initHistoryConfirmationToDelete();
     initUploadHistoryMax();
     initUploadClientSecret();
 #endif
+
+    beginGroup(tr("Interface"));
     initPredefinedColorPaletteLarge();
-    initShowSelectionGeometry();
-
-    m_layout->addStretch();
-
-    initShowMagnifier();
-    initSquareMagnifier();
+    initAntialiasingPinZoom();
+    initUndoLimit();
+    initInsecurePixelate();
     initJpegQuality();
     initReverseArrow();
     initDrawCircleCounterOutline();
+    m_scrollAreaLayout->addStretch();
     // this has to be at the end
     initConfigButtons();
     updateComponents();
@@ -137,6 +149,12 @@ void GeneralConf::_updateComponents(bool allowEmptySavePath)
 #endif
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
     m_useX11LegacyScreenshot->setChecked(config.useX11LegacyScreenshot());
+    m_rackEnabled->setChecked(config.rackEnabled());
+    m_rackClipboardHistory->setChecked(config.rackClipboardHistory());
+    m_rackDisplayMode->setCurrentIndex(
+      config.rackDisplayMode() == QStringLiteral("always") ? 1 : 0);
+    m_rackPosition->setCurrentIndex(
+      std::max(0, m_rackPosition->findData(config.rackPosition())));
 #endif
 }
 
@@ -262,7 +280,7 @@ void GeneralConf::initScrollArea()
     auto* content = new QWidget(m_scrollArea);
     m_scrollArea->setWidget(content);
     m_scrollArea->setWidgetResizable(true);
-    m_scrollArea->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
+    m_scrollArea->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
     m_scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     content->setObjectName("content");
@@ -278,7 +296,7 @@ void GeneralConf::initShowHelp()
     m_helpMessage = new QCheckBox(tr("Show help message"), this);
     m_helpMessage->setToolTip(tr("Show the help message at the beginning "
                                  "in the capture mode"));
-    m_scrollAreaLayout->addWidget(m_helpMessage);
+    addSetting(m_helpMessage);
 
     connect(
       m_helpMessage, &QCheckBox::clicked, this, &GeneralConf::showHelpChanged);
@@ -290,7 +308,7 @@ void GeneralConf::initSaveLastRegion()
     m_saveLastRegion->setToolTip(
       tr("Use the last region as the default selection for the next screenshot "
          "in GUI mode"));
-    m_scrollAreaLayout->addWidget(m_saveLastRegion);
+    addSetting(m_saveLastRegion);
 
     connect(m_saveLastRegion,
             &QCheckBox::clicked,
@@ -303,7 +321,7 @@ void GeneralConf::initShowSidePanelButton()
     m_sidePanelButton = new QCheckBox(tr("Show the side panel button"), this);
     m_sidePanelButton->setToolTip(
       tr("Show the side panel toggle button in the capture mode"));
-    m_scrollAreaLayout->addWidget(m_sidePanelButton);
+    addSetting(m_sidePanelButton);
 
     connect(m_sidePanelButton,
             &QCheckBox::clicked,
@@ -315,7 +333,7 @@ void GeneralConf::initShowDesktopNotification()
 {
     m_sysNotifications = new QCheckBox(tr("Show desktop notifications"), this);
     m_sysNotifications->setToolTip(tr("Enable desktop notifications"));
-    m_scrollAreaLayout->addWidget(m_sysNotifications);
+    addSetting(m_sysNotifications);
 
     connect(m_sysNotifications,
             &QCheckBox::clicked,
@@ -327,7 +345,7 @@ void GeneralConf::initShowAbortNotification()
 {
     m_abortNotifications = new QCheckBox(tr("Show abort notifications"), this);
     m_abortNotifications->setToolTip(tr("Enable abort notifications"));
-    m_scrollAreaLayout->addWidget(m_abortNotifications);
+    addSetting(m_abortNotifications);
 
     connect(m_abortNotifications,
             &QCheckBox::clicked,
@@ -339,7 +357,7 @@ void GeneralConf::initShowTrayIcon()
 {
     m_showTray = new QCheckBox(tr("Show tray icon"), this);
     m_showTray->setToolTip(tr("Show icon in the system tray"));
-    m_scrollAreaLayout->addWidget(m_showTray);
+    addSetting(m_showTray);
 
     connect(m_showTray, &QCheckBox::clicked, this, [](bool checked) {
         ConfigHandler().setDisabledTrayIcon(!checked);
@@ -353,7 +371,7 @@ void GeneralConf::initHistoryConfirmationToDelete()
       this);
     m_historyConfirmationToDelete->setToolTip(
       tr("Ask for confirmation to delete screenshot from the latest uploads"));
-    m_scrollAreaLayout->addWidget(m_historyConfirmationToDelete);
+    addSetting(m_historyConfirmationToDelete);
 
     connect(m_historyConfirmationToDelete,
             &QCheckBox::clicked,
@@ -396,7 +414,7 @@ void GeneralConf::initCheckForUpdates()
 {
     m_checkForUpdates = new QCheckBox(tr("Automatic check for updates"), this);
     m_checkForUpdates->setToolTip(tr("Check for updates automatically"));
-    m_scrollAreaLayout->addWidget(m_checkForUpdates);
+    addSetting(m_checkForUpdates);
 
     connect(m_checkForUpdates,
             &QCheckBox::clicked,
@@ -411,7 +429,7 @@ void GeneralConf::initAllowMultipleGuiInstances()
       tr("Allow multiple flameshot GUI instances simultaneously"), this);
     m_allowMultipleGuiInstances->setToolTip(tr(
       "This allows you to take screenshots of Flameshot itself for example"));
-    m_scrollAreaLayout->addWidget(m_allowMultipleGuiInstances);
+    addSetting(m_allowMultipleGuiInstances);
     connect(m_allowMultipleGuiInstances,
             &QCheckBox::clicked,
             this,
@@ -424,7 +442,7 @@ void GeneralConf::initAutoCloseIdleDaemon()
       new QCheckBox(tr("Close flameshot when idle"), this);
     m_autoCloseIdleDaemon->setToolTip(tr(
       "Automatically close daemon (background process) when it is not needed"));
-    m_scrollAreaLayout->addWidget(m_autoCloseIdleDaemon);
+    addSetting(m_autoCloseIdleDaemon);
     connect(m_autoCloseIdleDaemon,
             &QCheckBox::clicked,
             this,
@@ -436,7 +454,7 @@ void GeneralConf::initAutostart()
     m_autostart = new QCheckBox(tr("Launch in background at startup"), this);
     m_autostart->setToolTip(tr(
       "Launch Flameshot daemon (background process) when computer is booted"));
-    m_scrollAreaLayout->addWidget(m_autostart);
+    addSetting(m_autostart);
 
     connect(
       m_autostart, &QCheckBox::clicked, this, &GeneralConf::autostartChanged);
@@ -450,7 +468,7 @@ void GeneralConf::initShowStartupLaunchMessage()
     m_showStartupLaunchMessage->setToolTip(
       tr("Show the welcome message box in the middle of the screen while "
          "taking a screenshot"));
-    m_scrollAreaLayout->addWidget(m_showStartupLaunchMessage);
+    addSetting(m_showStartupLaunchMessage);
 
     connect(m_showStartupLaunchMessage, &QCheckBox::clicked, [](bool checked) {
         ConfigHandler().setShowStartupLaunchMessage(checked);
@@ -463,7 +481,7 @@ void GeneralConf::initShowQuitPrompt()
     ConfigHandler config;
     m_showQuitPrompt->setToolTip(
       tr("Show the confirmation prompt before ESC quit"));
-    m_scrollAreaLayout->addWidget(m_showQuitPrompt);
+    addSetting(m_showQuitPrompt);
 
     connect(m_showQuitPrompt, &QCheckBox::clicked, [](bool checked) {
         ConfigHandler().setShowQuitPrompt(checked);
@@ -476,7 +494,7 @@ void GeneralConf::initPredefinedColorPaletteLarge()
       new QCheckBox(tr("Use large predefined color palette"), this);
     m_predefinedColorPaletteLarge->setToolTip(
       tr("Use a large predefined color palette"));
-    m_scrollAreaLayout->addWidget(m_predefinedColorPaletteLarge);
+    addSetting(m_predefinedColorPaletteLarge);
 
     connect(
       m_predefinedColorPaletteLarge, &QCheckBox::clicked, [](bool checked) {
@@ -488,7 +506,7 @@ void GeneralConf::initCopyOnDoubleClick()
     m_copyOnDoubleClick = new QCheckBox(tr("Copy on double click"), this);
     m_copyOnDoubleClick->setToolTip(
       tr("Enable Copy to clipboard on Double Click"));
-    m_scrollAreaLayout->addWidget(m_copyOnDoubleClick);
+    addSetting(m_copyOnDoubleClick);
 
     connect(m_copyOnDoubleClick, &QCheckBox::clicked, [](bool checked) {
         ConfigHandler().setCopyOnDoubleClick(checked);
@@ -500,7 +518,7 @@ void GeneralConf::initCopyAndCloseAfterUpload()
     m_copyURLAfterUpload = new QCheckBox(tr("Copy URL after upload"), this);
     m_copyURLAfterUpload->setToolTip(
       tr("Copy URL after uploading was successful"));
-    m_scrollAreaLayout->addWidget(m_copyURLAfterUpload);
+    addSetting(m_copyURLAfterUpload);
 
     connect(m_copyURLAfterUpload, &QCheckBox::clicked, [](bool checked) {
         ConfigHandler().setCopyURLAfterUpload(checked);
@@ -512,7 +530,7 @@ void GeneralConf::initSaveAfterCopy()
     m_saveAfterCopy = new QCheckBox(tr("Save image after copy"), this);
     m_saveAfterCopy->setToolTip(
       tr("After copying the screenshot, save it to a file as well"));
-    m_scrollAreaLayout->addWidget(m_saveAfterCopy);
+    addSetting(m_saveAfterCopy);
     connect(m_saveAfterCopy,
             &QCheckBox::clicked,
             this,
@@ -520,7 +538,7 @@ void GeneralConf::initSaveAfterCopy()
 
     auto* box = new QGroupBox(tr("Save Path"));
     box->setFlat(true);
-    m_layout->addWidget(box);
+    m_scrollAreaLayout->addWidget(box);
 
     auto* vboxLayout = new QVBoxLayout();
     box->setLayout(vboxLayout);
@@ -585,7 +603,7 @@ void GeneralConf::initUploadHistoryMax()
 {
     auto* box = new QGroupBox(tr("Latest Uploads Max Size"));
     box->setFlat(true);
-    m_layout->addWidget(box);
+    m_scrollAreaLayout->addWidget(box);
 
     auto* vboxLayout = new QVBoxLayout();
     box->setLayout(vboxLayout);
@@ -607,7 +625,7 @@ void GeneralConf::initUploadClientSecret()
 {
     auto* box = new QGroupBox(tr("Imgur Application Client ID"));
     box->setFlat(true);
-    m_layout->addWidget(box);
+    m_scrollAreaLayout->addWidget(box);
 
     auto* vboxLayout = new QVBoxLayout();
     box->setLayout(vboxLayout);
@@ -638,7 +656,7 @@ void GeneralConf::initUndoLimit()
 {
     auto* box = new QGroupBox(tr("Undo limit"));
     box->setFlat(true);
-    m_layout->addWidget(box);
+    m_scrollAreaLayout->addWidget(box);
 
     auto* vboxLayout = new QVBoxLayout();
     box->setLayout(vboxLayout);
@@ -679,7 +697,77 @@ void GeneralConf::initUseJpgForClipboard()
             &GeneralConf::useJpgForClipboardChanged);
 #endif
 
-    m_scrollAreaLayout->addWidget(m_useJpgForClipboard);
+    addSetting(m_useJpgForClipboard);
+}
+
+void GeneralConf::beginGroup(const QString& title)
+{
+    auto* box = new QGroupBox(title);
+    box->setFlat(true);
+    m_groupLayout = new QVBoxLayout(box);
+    m_scrollAreaLayout->addWidget(box);
+}
+
+void GeneralConf::addSetting(QWidget* widget)
+{
+    m_groupLayout->addWidget(widget);
+}
+
+void GeneralConf::addSettingLayout(QLayout* layout)
+{
+    m_groupLayout->addLayout(layout);
+}
+
+void GeneralConf::initRackSettings()
+{
+#if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
+    beginGroup(tr("Rack"));
+    auto* layout = m_groupLayout;
+    QWidget* group = m_groupLayout->parentWidget();
+
+    m_rackEnabled =
+      new QCheckBox(tr("Show screenshot rack at the screen edge"), group);
+    m_rackEnabled->setToolTip(
+      tr("Screenshots are hung on a clothesline at the top screen edge"));
+    connect(m_rackEnabled, &QCheckBox::clicked, this, [](bool checked) {
+        ConfigHandler().setRackEnabled(checked);
+    });
+    layout->addWidget(m_rackEnabled);
+
+    m_rackDisplayMode = new QComboBox(group);
+    m_rackDisplayMode->addItem(tr("Expand on hover"), QStringLiteral("hover"));
+    m_rackDisplayMode->addItem(tr("Always expanded"), QStringLiteral("always"));
+    connect(m_rackDisplayMode, &QComboBox::currentIndexChanged, this, [this]() {
+        ConfigHandler().setRackDisplayMode(
+          m_rackDisplayMode->currentData().toString());
+    });
+    layout->addWidget(m_rackDisplayMode);
+
+    auto* positionRow = new QHBoxLayout;
+    auto* positionLabel = new QLabel(tr("Position"), group);
+    m_rackPosition = new QComboBox(group);
+    m_rackPosition->addItem(tr("Left"), QStringLiteral("left"));
+    m_rackPosition->addItem(tr("Center"), QStringLiteral("center"));
+    m_rackPosition->addItem(tr("Right"), QStringLiteral("right"));
+    connect(m_rackPosition, &QComboBox::currentIndexChanged, this, [this]() {
+        ConfigHandler().setRackPosition(
+          m_rackPosition->currentData().toString());
+    });
+    positionRow->addWidget(positionLabel);
+    positionRow->addWidget(m_rackPosition, 1);
+    layout->addLayout(positionRow);
+
+    m_rackClipboardHistory =
+      new QCheckBox(tr("Keep clipboard history in the rack"), group);
+    m_rackClipboardHistory->setToolTip(
+      tr("Persisted across restarts until cleared; skipped for passwords; "
+         "images can be re-copied"));
+    connect(
+      m_rackClipboardHistory, &QCheckBox::clicked, this, [](bool checked) {
+          ConfigHandler().setRackClipboardHistory(checked);
+      });
+    layout->addWidget(m_rackClipboardHistory);
+#endif
 }
 
 void GeneralConf::saveAfterCopyChanged(bool checked)
@@ -702,7 +790,7 @@ void GeneralConf::initCopyPathAfterSave()
     m_copyPathAfterSave = new QCheckBox(tr("Copy file path after save"), this);
     m_copyPathAfterSave->setToolTip(tr("Copy the file path to clipboard after "
                                        "the file is saved"));
-    m_scrollAreaLayout->addWidget(m_copyPathAfterSave);
+    addSetting(m_copyPathAfterSave);
     connect(m_copyPathAfterSave, &QCheckBox::clicked, [](bool checked) {
         ConfigHandler().setCopyPathAfterSave(checked);
     });
@@ -715,7 +803,7 @@ void GeneralConf::initAntialiasingPinZoom()
     m_antialiasingPinZoom->setToolTip(
       tr("After zooming the pinned image, should the image get smoothened or "
          "stay pixelated"));
-    m_scrollAreaLayout->addWidget(m_antialiasingPinZoom);
+    addSetting(m_antialiasingPinZoom);
     connect(m_antialiasingPinZoom, &QCheckBox::clicked, [](bool checked) {
         ConfigHandler().setAntialiasingPinZoom(checked);
     });
@@ -727,7 +815,7 @@ void GeneralConf::initUploadWithoutConfirmation()
       new QCheckBox(tr("Upload image without confirmation"), this);
     m_uploadWithoutConfirmation->setToolTip(
       tr("Upload image without confirmation"));
-    m_scrollAreaLayout->addWidget(m_uploadWithoutConfirmation);
+    addSetting(m_uploadWithoutConfirmation);
     connect(m_uploadWithoutConfirmation, &QCheckBox::clicked, [](bool checked) {
         ConfigHandler().setUploadWithoutConfirmation(checked);
     });
@@ -764,7 +852,7 @@ void GeneralConf::initShowMagnifier()
     m_showMagnifier->setToolTip(tr("Enable a magnifier while selecting the "
                                    "screenshot area"));
 
-    m_scrollAreaLayout->addWidget(m_showMagnifier);
+    addSetting(m_showMagnifier);
     connect(m_showMagnifier, &QCheckBox::clicked, [](bool checked) {
         ConfigHandler().setShowMagnifier(checked);
     });
@@ -774,7 +862,7 @@ void GeneralConf::initSquareMagnifier()
 {
     m_squareMagnifier = new QCheckBox(tr("Square shaped magnifier"), this);
     m_squareMagnifier->setToolTip(tr("Make the magnifier to be square-shaped"));
-    m_scrollAreaLayout->addWidget(m_squareMagnifier);
+    addSetting(m_squareMagnifier);
     connect(m_squareMagnifier, &QCheckBox::clicked, [](bool checked) {
         ConfigHandler().setSquareMagnifier(checked);
     });
@@ -794,7 +882,7 @@ void GeneralConf::initShowSelectionGeometry()
     tobox->addWidget(m_xywhTimeout);
     tobox->addWidget(new QLabel(tr("Set geometry display timeout (ms)")));
 
-    m_scrollAreaLayout->addLayout(tobox);
+    addSettingLayout(tobox);
     connect(m_xywhTimeout,
             static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
             this,
@@ -802,7 +890,7 @@ void GeneralConf::initShowSelectionGeometry()
 
     auto* box = new QGroupBox(tr("Selection Geometry Display"));
     box->setFlat(true);
-    m_layout->addWidget(box);
+    m_scrollAreaLayout->addWidget(box);
 
     auto* vboxLayout = new QVBoxLayout();
     box->setLayout(vboxLayout);
@@ -850,7 +938,7 @@ void GeneralConf::initJpegQuality()
     tobox->addWidget(m_jpegQuality);
     tobox->addWidget(new QLabel(tr("JPEG Quality")));
 
-    m_scrollAreaLayout->addLayout(tobox);
+    addSettingLayout(tobox);
     connect(m_jpegQuality,
             static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
             this,
@@ -861,7 +949,7 @@ void GeneralConf::initReverseArrow()
 {
     m_reverseArrow = new QCheckBox(tr("Reverse arrow"), this);
     m_reverseArrow->setToolTip(tr("Draw the arrow head first"));
-    m_scrollAreaLayout->addWidget(m_reverseArrow);
+    addSetting(m_reverseArrow);
 
     connect(
       m_reverseArrow, &QCheckBox::clicked, this, &GeneralConf::setReverseArrow);
@@ -874,7 +962,7 @@ void GeneralConf::initDrawCircleCounterOutline()
     m_drawCircleCounterOutline->setToolTip(
       tr("Draw a contrasting ring around the counter bubble so it stays "
          "visible on any background"));
-    m_scrollAreaLayout->addWidget(m_drawCircleCounterOutline);
+    addSetting(m_drawCircleCounterOutline);
 
     connect(m_drawCircleCounterOutline, &QCheckBox::clicked, [](bool checked) {
         ConfigHandler().setDrawCircleCounterOutline(checked);
@@ -887,7 +975,7 @@ void GeneralConf::initInsecurePixelate()
     m_insecurePixelate->setToolTip(
       tr("Draw the pixelation effect in an insecure but more asethetic way."));
     m_insecurePixelate->setChecked(ConfigHandler().insecurePixelate());
-    m_scrollAreaLayout->addWidget(m_insecurePixelate);
+    addSetting(m_insecurePixelate);
 
     connect(m_insecurePixelate,
             &QCheckBox::clicked,
@@ -946,7 +1034,7 @@ void GeneralConf::initCaptureActiveMonitor()
       tr("Automatically capture the monitor where the cursor is located "
          "instead of showing the monitor selection dialog. "
          "This feature is not supported on macOS and Wayland."));
-    m_scrollAreaLayout->addWidget(m_captureActiveMonitor);
+    addSetting(m_captureActiveMonitor);
 
     connect(m_captureActiveMonitor,
             &QCheckBox::clicked,
@@ -969,7 +1057,7 @@ void GeneralConf::initUseNativeFullscreen()
       tr("Use macOS native fullscreen mode for the capture overlay. "
          "When disabled (default), the overlay avoids the fullscreen "
          "desktop animation."));
-    m_scrollAreaLayout->addWidget(m_useNativeFullscreen);
+    addSetting(m_useNativeFullscreen);
 
     connect(m_useNativeFullscreen,
             &QCheckBox::clicked,
@@ -993,7 +1081,7 @@ void GeneralConf::initUseX11LegacyScreenshot()
          "capture. Enable this if your window manager lacks "
          "xdg-desktop-portal (e.g. xmonad, i3). "
          "Only effective on X11; ignored on Wayland."));
-    m_scrollAreaLayout->addWidget(m_useX11LegacyScreenshot);
+    addSetting(m_useX11LegacyScreenshot);
 
     connect(m_useX11LegacyScreenshot,
             &QCheckBox::clicked,

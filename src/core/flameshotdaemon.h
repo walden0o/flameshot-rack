@@ -13,6 +13,7 @@ class QDBusMessage;
 class QDBusConnection;
 class TrayIcon;
 class CaptureWidget;
+class RackService;
 
 #if !defined(DISABLE_UPDATE_CHECKER)
 class QNetworkAccessManager;
@@ -27,6 +28,8 @@ public:
     static void start();
     static FlameshotDaemon* instance();
     static void createPin(const QPixmap& capture, QRect geometry);
+    static void hangOnRack(const QPixmap& capture);
+    static void setRackCaptureActive(bool active);
     static void copyToClipboard(const QPixmap& capture);
     static void copyToClipboard(const QString& text,
                                 const QString& notification = "");
@@ -62,9 +65,14 @@ private:
     FlameshotDaemon();
     void quitIfIdle();
     void attachPin(const QPixmap& pixmap, QRect geometry);
+    void attachRack(const QPixmap& pixmap);
+    void attachRackService();
+    void setRackEnabled(bool enabled);
+    void applyRackCaptureActive(bool active);
     void attachScreenshotToClipboard(const QPixmap& pixmap);
 
     void attachPin(const QByteArray& data);
+    void attachRack(const QByteArray& data);
     void attachScreenshotToClipboard(const QByteArray& screenshot);
     void attachTextToClipboard(const QString& text,
                                const QString& notification);
@@ -83,6 +91,7 @@ private:
     bool m_clipboardSignalBlocked;
     QList<QWidget*> m_widgets;
     TrayIcon* m_trayIcon;
+    RackService* m_rack;
 
 #if !defined(DISABLE_UPDATE_CHECKER)
     QString m_appLatestUrl;
