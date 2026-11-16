@@ -138,6 +138,9 @@ void TrayIcon::initMenu()
     m_rackAction = new QAction(tr("&Rack"), this);
     m_rackAction->setCheckable(true);
     m_rackAction->setChecked(ConfigHandler().rackEnabled());
+    // The rack only works on X11 (global pointer polling + always-on-top).
+    m_rackAction->setVisible(QGuiApplication::platformName() ==
+                             QLatin1String("xcb"));
     connect(m_rackAction, &QAction::toggled, this, [](bool checked) {
         ConfigHandler().setRackEnabled(checked);
     });

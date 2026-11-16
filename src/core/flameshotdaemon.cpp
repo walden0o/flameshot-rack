@@ -12,9 +12,21 @@
 
 #include <QApplication>
 #include <QClipboard>
+#include <QGuiApplication>
 #include <QIODevice>
 #include <QPixmap>
 #include <QRect>
+
+namespace {
+
+// The rack relies on global pointer polling and an always-on-top frameless
+// window, which only work on X11.
+bool rackPlatformSupported()
+{
+    return QGuiApplication::platformName() == QLatin1String("xcb");
+}
+
+} // namespace
 
 #if !(defined(Q_OS_MACOS) || defined(Q_OS_WIN))
 #include <QDBusConnection>
@@ -115,8 +127,8 @@ FlameshotDaemon::FlameshotDaemon()
                 ConfigHandler config;
                 enableTrayIcon(!config.disabledTrayIcon());
                 m_persist = !config.autoCloseIdleDaemon();
-                if (m_rack) {
-                    m_rack->setEnabled(config.rackEnabled());
+                setRackEnabled(config.rackEnabled());
+                if (m_rack && m_rack->window()) {
                     m_rack->window()->setDisplayMode(config.rackDisplayMode());
                     m_rack->window()->setClipboardHistoryEnabled(
                       config.rackClipboardHistory());
@@ -137,9 +149,7 @@ void FlameshotDaemon::start()
         // Tray icon needs FlameshotDaemon::instance() to be non-null
         m_instance->initTrayIcon();
         qApp->setQuitOnLastWindowClosed(false);
-        if (ConfigHandler().rackEnabled()) {
-            m_instance->attachRackService();
-        }
+        m_instance->setRackEnabled(ConfigHandler().rackEnabled());
     }
 }
 
@@ -170,7 +180,7 @@ void FlameshotDaemon::createPin(const QPixmap& capture, QRect geometry)
 
 void FlameshotDaemon::hangOnRack(const QPixmap& capture)
 {
-    if (!ConfigHandler().rackEnabled()) {
+    if (!ConfigHandler().rackEnabled() || !rackPlatformSupported()) {
         return;
     }
     if (instance()) {
@@ -390,10 +400,63 @@ void FlameshotDaemon::attachRackService()
 
 void FlameshotDaemon::attachRack(const QPixmap& pixmap)
 {
+    if (!rackPlatformSupported()) {
+        return;
+    }
     if (!m_rack) {
         attachRackService();
     }
     m_rack->addScreenshot(pixmap.toImage());
+}
+
+void FlameshotDaemon::setRackEnabled(bool enabled)
+{
+    if (enabled) {
+        if (!rackPlatformSupported()) {
+            return;
+        }
+        if (!m_rack) {
+            attachRackService();
+            return;
+        }
+        m_rack->setEnabled(true);
+        if (QWidget* host = m_rack->hostWidget();
+            host && !m_widgets.contains(host)) {
+            m_widgets.append(host);
+        }
+        return;
+    }
+    if (!m_rack) {
+        return;
+    }
+    if (QWidget* host = m_rack->hostWidget()) {
+        m_widgets.removeOne(host);
+    }
+    m_rack->setEnabled(false);
+    quitIfIdle();
+}
+
+void FlameshotDaemon::setRackCaptureActive(bool active)
+{
+    if (instance()) {
+        instance()->applyRackCaptureActive(active);
+        return;
+    }
+
+#if !(defined(Q_OS_MACOS) || defined(Q_OS_WIN))
+    QDBusMessage m = createMethodCall(QStringLiteral("rackCaptureActive"));
+    m << active;
+    // Blocking call: the daemon replies once the rack is hidden/shown, so
+    // the caller can safely grab pixels right after this returns.
+    call(m);
+#endif
+}
+
+void FlameshotDaemon::applyRackCaptureActive(bool active)
+{
+    if (m_rack && m_rack->window()) {
+        m_rack->window()->setCaptureActive(QStringLiteral("capture"), active);
+    }
 }
 
 void FlameshotDaemon::attachScreenshotToClipboard(const QPixmap& pixmap)

@@ -29,6 +29,7 @@ public:
     static FlameshotDaemon* instance();
     static void createPin(const QPixmap& capture, QRect geometry);
     static void hangOnRack(const QPixmap& capture);
+    static void setRackCaptureActive(bool active);
     static void copyToClipboard(const QPixmap& capture);
     static void copyToClipboard(const QString& text,
                                 const QString& notification = "");
@@ -66,6 +67,8 @@ private:
     void attachPin(const QPixmap& pixmap, QRect geometry);
     void attachRack(const QPixmap& pixmap);
     void attachRackService();
+    void setRackEnabled(bool enabled);
+    void applyRackCaptureActive(bool active);
     void attachScreenshotToClipboard(const QPixmap& pixmap);
 
     void attachPin(const QByteArray& data);
