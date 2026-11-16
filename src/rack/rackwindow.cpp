@@ -832,8 +832,9 @@ void RackWindow::closeEvent(QCloseEvent* event)
     // must still be accepted — ignoring it vetoes QApplication::quit.
     event->accept();
     dismiss();
-    // In always mode a WM close hid a panel nothing re-opens; restore it.
-    updateVisibility();
+    // QWidget hides the window after an accepted close, so restoring an
+    // always-mode panel must happen after closeEvent returns.
+    QTimer::singleShot(0, this, [this] { updateVisibility(); });
 }
 
 void RackWindow::mousePressEvent(QMouseEvent* event)
