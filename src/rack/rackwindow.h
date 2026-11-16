@@ -92,7 +92,6 @@ private:
     int m_interactionDepth = 0;
     QSet<QString> m_captureSources;
     QWidget* m_body;
-    QLabel* m_title;
     QLabel* m_empty;
     QLabel* m_hint;
     QToolButton* m_settings;

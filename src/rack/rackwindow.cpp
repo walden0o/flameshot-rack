@@ -19,6 +19,7 @@
 #include <QMimeData>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPainterPath>
 #include <QScreen>
 #include <QStandardPaths>
 #include <QStyleOptionViewItem>
@@ -164,7 +165,7 @@ RackWindow::RackWindow(RackContentModel& model,
     layout->setContentsMargins(8, 4, 8, 8);
     layout->setSpacing(8);
     auto* header = new QHBoxLayout;
-    m_title = new QLabel(m_body);
+    header->setSpacing(4);
     m_settings = new QToolButton(m_body);
     m_close = new QToolButton(m_body);
     m_settings->setObjectName(QStringLiteral("rack-settings"));
@@ -182,15 +183,32 @@ RackWindow::RackWindow(RackContentModel& model,
     m_search = new QLineEdit(m_body);
     m_search->setObjectName(QStringLiteral("rack-clipboard-search"));
     m_search->setClearButtonEnabled(true);
-    header->addWidget(m_title);
-    header->addWidget(m_screenshotsTab);
-    header->addWidget(m_clipboardTab);
+    // macOS-style segmented control: both tabs inside one rounded track,
+    // centered like a Dynamic Island pill.
+    auto* tabs = new QWidget(m_body);
+    tabs->setObjectName(QStringLiteral("rack-segmented"));
+    auto* tabsLayout = new QHBoxLayout(tabs);
+    tabsLayout->setContentsMargins(2, 2, 2, 2);
+    tabsLayout->setSpacing(0);
+    tabsLayout->addWidget(m_screenshotsTab);
+    tabsLayout->addWidget(m_clipboardTab);
+    header->addStretch();
+    header->addWidget(tabs);
     header->addWidget(m_search, 1);
     header->addStretch();
     header->addWidget(m_clearHistory);
     header->addWidget(m_settings);
     header->addWidget(m_close);
     layout->addLayout(header);
+    m_body->setStyleSheet(QStringLiteral(
+      "#rack-segmented { background: rgba(127,127,127,45);"
+      "  border-radius: 9px; }"
+      "QToolButton { border: none; background: transparent;"
+      "  padding: 3px 10px; border-radius: 7px; }"
+      "QToolButton:hover { background: rgba(127,127,127,50); }"
+      "QToolButton:checked { background: rgba(127,127,127,90); }"
+      "QLineEdit { border: none; background: rgba(127,127,127,45);"
+      "  border-radius: 9px; padding: 3px 10px; }"));
     auto* list = new RackList(m_body);
     m_list = list;
     list->drag = [this](const QString& id) { dragEntry(id); };
@@ -692,9 +710,10 @@ void RackWindow::retranslateUi()
 {
     setWindowTitle(tr("Rack"));
     setAccessibleName(tr("Screenshot Rack"));
-    m_title->setText(tr("Rack"));
-    m_settings->setText(tr("Settings"));
-    m_close->setText(tr("Collapse"));
+    m_settings->setText(QStringLiteral("\u2699"));
+    m_settings->setToolTip(tr("Settings"));
+    m_close->setText(QStringLiteral("\u2715"));
+    m_close->setToolTip(tr("Collapse"));
     m_screenshotsTab->setText(tr("Screenshots"));
     m_clipboardTab->setText(tr("Clipboard"));
     m_clearHistory->setText(tr("Clear"));
@@ -714,7 +733,9 @@ void RackWindow::paintEvent(QPaintEvent*)
     painter.setRenderHint(QPainter::Antialiasing);
     const QRectF bodyRect = QRectF(rect()).adjusted(0.5, -12, -0.5, -0.5);
     QLinearGradient bodyGrad(bodyRect.topLeft(), bodyRect.bottomLeft());
-    const QColor windowColor = palette().color(QPalette::Window);
+    QColor windowColor = palette().color(QPalette::Window);
+    // Slight translucency gives the capsule a frosted, mac-like feel.
+    windowColor.setAlpha(232);
     bodyGrad.setColorAt(0, windowColor.lighter(106));
     bodyGrad.setColorAt(1, windowColor.darker(104));
     painter.setPen(palette().color(QPalette::Mid));
