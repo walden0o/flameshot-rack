@@ -204,7 +204,8 @@ QPixmap ScreenGrabber::unixScreenshot(bool& ok)
     const PortalStatus status = freeDesktopPortal(screenshot, portalError);
     ok = status == PortalStatus::Success;
 
-    if ((status == PortalStatus::Unavailable || status == PortalStatus::Failed) &&
+    if ((status == PortalStatus::Unavailable ||
+         status == PortalStatus::Failed) &&
         !m_info.waylandDetected()) {
         // The portal cannot take screenshots here, which is common on X11
         // window managers such as i3 or XMonad, so take the native X11

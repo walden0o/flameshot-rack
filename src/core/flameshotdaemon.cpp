@@ -451,9 +451,8 @@ void FlameshotDaemon::setRackCaptureActive(bool active)
     // No rack to hide unless the daemon is already running; a blocking
     // call here would otherwise activate it just for this.
     const QDBusConnection bus = QDBusConnection::sessionBus();
-    if (!bus.isConnected() ||
-        !bus.interface()->isServiceRegistered(
-          QStringLiteral("org.flameshot.Flameshot"))) {
+    if (!bus.isConnected() || !bus.interface()->isServiceRegistered(
+                                QStringLiteral("org.flameshot.Flameshot"))) {
         return;
     }
     QDBusMessage m = createMethodCall(QStringLiteral("rackCaptureActive"));
