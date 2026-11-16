@@ -23,8 +23,7 @@ namespace {
 // <id>.png or <id>.txt plus a <id>.meta sidecar per entry.
 QDir rackStorageDir(const QString& name)
 {
-    QDir dir(QStandardPaths::writableLocation(
-               QStandardPaths::AppDataLocation) +
+    QDir dir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) +
              QStringLiteral("/rack/") + name);
     dir.mkpath(QStringLiteral("."));
     // Stored entries can contain sensitive content; keep them owner-only.
@@ -41,23 +40,20 @@ void persistModel(const RackContentModel& model, const QString& name)
     for (const auto& entry : model.entries()) {
         live.insert(entry.id);
     }
-    for (const QString& file :
-         dir.entryList({ QStringLiteral("*.png"),
-                         QStringLiteral("*.txt"),
-                         QStringLiteral("*.meta") },
-                       QDir::Files)) {
+    for (const QString& file : dir.entryList({ QStringLiteral("*.png"),
+                                               QStringLiteral("*.txt"),
+                                               QStringLiteral("*.meta") },
+                                             QDir::Files)) {
         const QString id = file.left(file.lastIndexOf(u'.'));
         if (!live.contains(id)) {
             dir.remove(file);
         }
     }
-    const auto ownerOnly =
-      QFileDevice::ReadOwner | QFileDevice::WriteOwner;
+    const auto ownerOnly = QFileDevice::ReadOwner | QFileDevice::WriteOwner;
     for (const auto& entry : model.entries()) {
-        const QString payloadPath =
-          dir.filePath(entry.id + (entry.image.isNull()
-                                     ? QStringLiteral(".txt")
-                                     : QStringLiteral(".png")));
+        const QString payloadPath = dir.filePath(
+          entry.id + (entry.image.isNull() ? QStringLiteral(".txt")
+                                           : QStringLiteral(".png")));
         bool payloadOk = QFile::exists(payloadPath);
         if (!payloadOk) {
             if (!entry.image.isNull()) {
@@ -111,10 +107,8 @@ QVector<RackEntry> loadEntries(const QString& name)
             .toUTC();
         entry.digest = QByteArray::fromHex(
           meta.value(QStringLiteral("digest")).toString().toLatin1());
-        const QString pngPath =
-          dir.filePath(id + QStringLiteral(".png"));
-        const QString txtPath =
-          dir.filePath(id + QStringLiteral(".txt"));
+        const QString pngPath = dir.filePath(id + QStringLiteral(".png"));
+        const QString txtPath = dir.filePath(id + QStringLiteral(".txt"));
         if (QFile::exists(pngPath)) {
             entry.image = QImage(pngPath);
         } else if (QFile::exists(txtPath)) {
@@ -132,11 +126,10 @@ QVector<RackEntry> loadEntries(const QString& name)
             dir.remove(metaName);
         }
     }
-    std::sort(loaded.begin(),
-              loaded.end(),
-              [](const RackEntry& a, const RackEntry& b) {
-                  return a.createdUtc > b.createdUtc;
-              });
+    std::sort(
+      loaded.begin(), loaded.end(), [](const RackEntry& a, const RackEntry& b) {
+          return a.createdUtc > b.createdUtc;
+      });
     return loaded;
 }
 
@@ -186,22 +179,14 @@ void RackService::ensureStarted()
         m_storageLoaded = true;
         m_model.restore(loadEntries(QStringLiteral("screenshots")));
         if (ConfigHandler().rackClipboardHistory()) {
-            m_clipboardModel.restore(
-              loadEntries(QStringLiteral("clipboard")));
+            m_clipboardModel.restore(loadEntries(QStringLiteral("clipboard")));
         }
-        connect(&m_model,
-                &RackContentModel::changed,
-                this,
-                [this] {
-                    persistModel(m_model, QStringLiteral("screenshots"));
-                });
-        connect(&m_clipboardModel,
-                &RackContentModel::changed,
-                this,
-                [this] {
-                    persistModel(m_clipboardModel,
-                                 QStringLiteral("clipboard"));
-                });
+        connect(&m_model, &RackContentModel::changed, this, [this] {
+            persistModel(m_model, QStringLiteral("screenshots"));
+        });
+        connect(&m_clipboardModel, &RackContentModel::changed, this, [this] {
+            persistModel(m_clipboardModel, QStringLiteral("clipboard"));
+        });
     }
     setEnabled(ConfigHandler().rackEnabled());
     m_window->setDisplayMode(ConfigHandler().rackDisplayMode());
