@@ -557,9 +557,9 @@ std::optional<RackEntry> RackWindow::entry(const QString& id) const
 
 QDir RackWindow::exportDirectory()
 {
-    return QDir(QStandardPaths::writableLocation(
-                  QStandardPaths::CacheLocation) +
-                QStringLiteral("/rack"));
+    return QDir(
+      QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
+      QStringLiteral("/rack"));
 }
 
 void RackWindow::removeExportedFile(const QString& id)
@@ -570,8 +570,8 @@ void RackWindow::removeExportedFile(const QString& id)
 void RackWindow::purgeExportedFiles()
 {
     QDir directory = exportDirectory();
-    const auto files = directory.entryList(
-      { QStringLiteral("Flameshot-*.png") }, QDir::Files);
+    const auto files =
+      directory.entryList({ QStringLiteral("Flameshot-*.png") }, QDir::Files);
     for (const QString& file : files) {
         directory.remove(file);
     }
@@ -584,8 +584,8 @@ QString RackWindow::exportEntry(const RackEntry& value)
         m_hint->setText(tr("Could not prepare the image file"));
         return {};
     }
-    const QString path = directory.filePath(
-      QStringLiteral("Flameshot-%1.png").arg(value.id));
+    const QString path =
+      directory.filePath(QStringLiteral("Flameshot-%1.png").arg(value.id));
     if (!value.image.save(path, "PNG")) {
         m_hint->setText(tr("Could not prepare the image file"));
         return {};
