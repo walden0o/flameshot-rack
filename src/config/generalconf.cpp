@@ -90,6 +90,7 @@ GeneralConf::GeneralConf(QWidget* parent)
     initJpegQuality();
     initReverseArrow();
     initDrawCircleCounterOutline();
+    m_scrollAreaLayout->addStretch();
     // this has to be at the end
     initConfigButtons();
     updateComponents();
@@ -276,7 +277,8 @@ void GeneralConf::initScrollArea()
     auto* content = new QWidget(m_scrollArea);
     m_scrollArea->setWidget(content);
     m_scrollArea->setWidgetResizable(true);
-    m_scrollArea->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
+    m_scrollArea->setSizePolicy(QSizePolicy::Minimum,
+                                QSizePolicy::Expanding);
     m_scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     content->setObjectName("content");
@@ -731,29 +733,22 @@ void GeneralConf::initRackSettings()
     layout->addWidget(m_rackEnabled);
 
     m_rackDisplayMode = new QComboBox(group);
-    m_rackDisplayMode->addItem(tr("Expand on hover"),
-                             QStringLiteral("hover"));
-    m_rackDisplayMode->addItem(tr("Always expanded"),
-                             QStringLiteral("always"));
-    connect(m_rackDisplayMode,
-            &QComboBox::currentIndexChanged,
-            this,
-            [this]() {
-                ConfigHandler().setRackDisplayMode(
-                  m_rackDisplayMode->currentData().toString());
-            });
+    m_rackDisplayMode->addItem(tr("Expand on hover"), QStringLiteral("hover"));
+    m_rackDisplayMode->addItem(tr("Always expanded"), QStringLiteral("always"));
+    connect(m_rackDisplayMode, &QComboBox::currentIndexChanged, this, [this]() {
+        ConfigHandler().setRackDisplayMode(
+          m_rackDisplayMode->currentData().toString());
+    });
     layout->addWidget(m_rackDisplayMode);
 
     m_rackClipboardHistory =
       new QCheckBox(tr("Keep clipboard history in the rack"), group);
-    m_rackClipboardHistory->setToolTip(tr(
-      "Memory only, skipped for passwords; images can be re-copied"));
-    connect(m_rackClipboardHistory,
-            &QCheckBox::clicked,
-            this,
-            [](bool checked) {
-                ConfigHandler().setRackClipboardHistory(checked);
-            });
+    m_rackClipboardHistory->setToolTip(
+      tr("Memory only, skipped for passwords; images can be re-copied"));
+    connect(
+      m_rackClipboardHistory, &QCheckBox::clicked, this, [](bool checked) {
+          ConfigHandler().setRackClipboardHistory(checked);
+      });
     layout->addWidget(m_rackClipboardHistory);
 #endif
 }

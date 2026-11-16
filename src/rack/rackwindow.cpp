@@ -96,9 +96,8 @@ public:
         const bool hovered = option.state & QStyle::State_MouseOver;
         QLinearGradient paperGrad(paper.topLeft(), paper.bottomLeft());
         paperGrad.setColorAt(0, option.palette.color(QPalette::Base));
-        paperGrad.setColorAt(
-          1,
-          option.palette.color(QPalette::Base).darker(104));
+        paperGrad.setColorAt(1,
+                             option.palette.color(QPalette::Base).darker(104));
         painter->setBrush(paperGrad);
         painter->setPen(QPen(selected
                                ? option.palette.color(QPalette::Highlight)
@@ -755,8 +754,8 @@ void RackWindow::paintEvent(QPaintEvent*)
         painter.setBrush(Qt::NoBrush);
         QPainterPath rope;
         rope.moveTo(QPointF(left, top));
-        rope.quadTo(
-          QPointF((left + right) / 2.0, top + 9), QPointF(right, top));
+        rope.quadTo(QPointF((left + right) / 2.0, top + 9),
+                    QPointF(right, top));
         painter.drawPath(rope);
         painter.setPen(Qt::NoPen);
         painter.setBrush(palette().color(QPalette::Dark));

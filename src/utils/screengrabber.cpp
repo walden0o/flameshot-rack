@@ -88,22 +88,22 @@ ScreenGrabber::PortalStatus ScreenGrabber::freeDesktopPortal(
     QEventLoop loop;
 
     bool cancelled = false;
-    const auto onPortalResponse = [&res, &loop, &cancelled, this](
-                                    uint status, const QVariantMap& map) {
-        if (status == 0) {
-            // Parse this as URI to handle unicode properly
-            QUrl uri = map.value("uri").toString();
-            QString uriString = uri.toLocalFile();
-            res = QPixmap(uriString);
-            QFile imgFile(uriString);
-            imgFile.remove();
-        } else {
-            // Response status: 1 = user declined the dialog (honor the
-            // refusal); 2 = backend error (still eligible for fallback).
-            cancelled = (status == 1);
-        }
-        loop.quit();
-    };
+    const auto onPortalResponse =
+      [&res, &loop, &cancelled, this](uint status, const QVariantMap& map) {
+          if (status == 0) {
+              // Parse this as URI to handle unicode properly
+              QUrl uri = map.value("uri").toString();
+              QString uriString = uri.toLocalFile();
+              res = QPixmap(uriString);
+              QFile imgFile(uriString);
+              imgFile.remove();
+          } else {
+              // Response status: 1 = user declined the dialog (honor the
+              // refusal); 2 = backend error (still eligible for fallback).
+              cancelled = (status == 1);
+          }
+          loop.quit();
+      };
 
     // prevent racy situations and listen before calling screenshot
     QMetaObject::Connection conn = QObject::connect(
