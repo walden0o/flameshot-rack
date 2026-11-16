@@ -552,11 +552,10 @@ void RackWindow::refresh()
     // Search and Clear stay put in both views so switching tabs does not
     // reflow the header.
     m_search->setEnabled(clipboard || !m_model.entries().isEmpty());
-    m_search->setPlaceholderText(clipboard
-                                   ? tr("Search clipboard history")
-                                   : tr("Search screenshots"));
-    m_clearHistory->setEnabled(
-      clipboard ? m_clipboardEnabled : !m_model.entries().isEmpty());
+    m_search->setPlaceholderText(clipboard ? tr("Search clipboard history")
+                                           : tr("Search screenshots"));
+    m_clearHistory->setEnabled(clipboard ? m_clipboardEnabled
+                                         : !m_model.entries().isEmpty());
     if (clipboard) {
         m_list->setViewMode(QListView::ListMode);
         m_list->setFlow(QListView::TopToBottom);
@@ -578,9 +577,8 @@ void RackWindow::refresh()
         if (!query.isEmpty()) {
             QVector<RackEntry> matched;
             for (const auto& value : values) {
-                const QString time =
-                  value.createdUtc.toLocalTime().toString(
-                    QStringLiteral("HH:mm:ss"));
+                const QString time = value.createdUtc.toLocalTime().toString(
+                  QStringLiteral("HH:mm:ss"));
                 if (time.contains(query, Qt::CaseInsensitive) ||
                     value.text.contains(query, Qt::CaseInsensitive)) {
                     matched.append(value);
