@@ -87,8 +87,9 @@ ScreenGrabber::PortalStatus ScreenGrabber::freeDesktopPortal(
 
     QEventLoop loop;
 
-    const auto onPortalResponse = [&res, &loop, this](uint status,
-                                                      const QVariantMap& map) {
+    bool cancelled = false;
+    const auto onPortalResponse = [&res, &loop, &cancelled, this](
+                                    uint status, const QVariantMap& map) {
         if (status == 0) {
             // Parse this as URI to handle unicode properly
             QUrl uri = map.value("uri").toString();
@@ -96,6 +97,8 @@ ScreenGrabber::PortalStatus ScreenGrabber::freeDesktopPortal(
             res = QPixmap(uriString);
             QFile imgFile(uriString);
             imgFile.remove();
+        } else {
+            cancelled = true;
         }
         loop.quit();
     };
@@ -169,7 +172,9 @@ ScreenGrabber::PortalStatus ScreenGrabber::freeDesktopPortal(
     }
 
     if (res.isNull()) {
-        return PortalStatus::Failed;
+        // A nonzero Response means the user declined the portal dialog:
+        // honor the refusal instead of falling back to a silent grab.
+        return cancelled ? PortalStatus::Cancelled : PortalStatus::Failed;
     }
 
 #ifdef FLAMESHOT_DEBUG_CAPTURE
