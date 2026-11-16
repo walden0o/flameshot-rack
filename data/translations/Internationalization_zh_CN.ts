@@ -3587,5 +3587,13 @@ You may need to escape the &apos;#&apos; sign as in &apos;\#FFF&apos;</source>
         <source>Remove from Rack</source>
         <translation>从晾衣架移除</translation>
     </message>
+    <message>
+        <source>Search screenshots</source>
+        <translation>搜索截图</translation>
+    </message>
+    <message>
+        <source>No matching screenshots</source>
+        <translation>没有匹配的截图</translation>
+    </message>
 </context>
 </TS>

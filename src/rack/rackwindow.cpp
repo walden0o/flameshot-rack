@@ -263,8 +263,10 @@ RackWindow::RackWindow(RackContentModel& model,
         setView(View::Clipboard);
     });
     connect(m_clearHistory, &QAbstractButton::clicked, this, [this] {
-        m_clipboardModel.clear();
-        purgeExportedFiles();
+        for (const auto& value : currentModel().entries()) {
+            removeExportedFile(value.id);
+        }
+        currentModel().clear();
     });
     connect(m_search, &QLineEdit::textChanged, this, &RackWindow::refresh);
     connect(qApp, &QGuiApplication::screenRemoved, this, [this] {
@@ -547,8 +549,14 @@ void RackWindow::refresh()
         : QString();
     m_list->clear();
     const bool clipboard = m_view == View::Clipboard;
-    m_search->setVisible(clipboard && m_clipboardEnabled);
-    m_clearHistory->setVisible(clipboard && m_clipboardEnabled);
+    // Search and Clear stay put in both views so switching tabs does not
+    // reflow the header.
+    m_search->setEnabled(clipboard || !m_model.entries().isEmpty());
+    m_search->setPlaceholderText(clipboard
+                                   ? tr("Search clipboard history")
+                                   : tr("Search screenshots"));
+    m_clearHistory->setEnabled(
+      clipboard ? m_clipboardEnabled : !m_model.entries().isEmpty());
     if (clipboard) {
         m_list->setViewMode(QListView::ListMode);
         m_list->setFlow(QListView::TopToBottom);
@@ -560,11 +568,27 @@ void RackWindow::refresh()
         m_list->setIconSize(QSize(144, 100));
         m_list->setGridSize(QSize(168, 140));
     }
-    const auto values =
-      clipboard
-        ? (m_clipboardEnabled ? m_clipboardModel.search(m_search->text())
-                              : QVector<RackEntry>())
-        : m_model.entries();
+    QVector<RackEntry> values;
+    if (clipboard) {
+        values = m_clipboardEnabled ? m_clipboardModel.search(m_search->text())
+                                    : QVector<RackEntry>();
+    } else {
+        values = m_model.entries();
+        const QString query = m_search->text().trimmed();
+        if (!query.isEmpty()) {
+            QVector<RackEntry> matched;
+            for (const auto& value : values) {
+                const QString time =
+                  value.createdUtc.toLocalTime().toString(
+                    QStringLiteral("HH:mm:ss"));
+                if (time.contains(query, Qt::CaseInsensitive) ||
+                    value.text.contains(query, Qt::CaseInsensitive)) {
+                    matched.append(value);
+                }
+            }
+            values = matched;
+        }
+    }
     for (const auto& value : values) {
         auto* item = new QListWidgetItem(m_list);
         item->setData(Qt::UserRole, value.id);
@@ -596,7 +620,9 @@ void RackWindow::refresh()
                            : tr("Clipboard history is off. Turn it on in "
                                 "Settings"));
     } else {
-        m_empty->setText(tr("Your next screenshot will appear here"));
+        m_empty->setText(m_search->text().isEmpty()
+                           ? tr("Your next screenshot will appear here")
+                           : tr("No matching screenshots"));
     }
     m_empty->setVisible(m_list->count() == 0);
     m_list->setVisible(m_list->count() > 0);
@@ -744,7 +770,6 @@ void RackWindow::retranslateUi()
     m_screenshotsTab->setText(tr("Screenshots"));
     m_clipboardTab->setText(tr("Clipboard"));
     m_clearHistory->setText(tr("Clear"));
-    m_search->setPlaceholderText(tr("Search clipboard history"));
     m_hint->setText(m_view == View::Clipboard
                       ? tr("Click to copy again; drag to share")
                       : tr("Click to copy image; drag to share"));
