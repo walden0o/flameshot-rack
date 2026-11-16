@@ -1409,8 +1409,8 @@ Please solve them manually in the configuration file.</source>
         <translation>在晾衣架中保留剪貼簿歷史</translation>
     </message>
     <message>
-        <source>Memory only, skipped for passwords; images can be re-copied</source>
-        <translation>僅保存在記憶體中，自動略過密碼管理器內容；圖片可重新複製</translation>
+        <source>Persisted across restarts until cleared; skipped for passwords; images can be re-copied</source>
+        <translation>保存在本機直到手動清空，自動略過密碼管理器內容；圖片可重新複製</translation>
     </message>
     <message>
         <source>Position</source>

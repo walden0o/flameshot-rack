@@ -760,7 +760,8 @@ void GeneralConf::initRackSettings()
     m_rackClipboardHistory =
       new QCheckBox(tr("Keep clipboard history in the rack"), group);
     m_rackClipboardHistory->setToolTip(
-      tr("Memory only, skipped for passwords; images can be re-copied"));
+      tr("Persisted across restarts until cleared; skipped for passwords; "
+         "images can be re-copied"));
     connect(
       m_rackClipboardHistory, &QCheckBox::clicked, this, [](bool checked) {
           ConfigHandler().setRackClipboardHistory(checked);

@@ -27,6 +27,10 @@ QDir rackStorageDir(const QString& name)
                QStandardPaths::AppDataLocation) +
              QStringLiteral("/rack/") + name);
     dir.mkpath(QStringLiteral("."));
+    // Stored entries can contain sensitive content; keep them owner-only.
+    QFile::setPermissions(dir.absolutePath(),
+                          QFileDevice::ReadOwner | QFileDevice::WriteOwner |
+                            QFileDevice::ExeOwner);
     return dir;
 }
 
@@ -47,32 +51,51 @@ void persistModel(const RackContentModel& model, const QString& name)
             dir.remove(file);
         }
     }
+    const auto ownerOnly =
+      QFileDevice::ReadOwner | QFileDevice::WriteOwner;
     for (const auto& entry : model.entries()) {
-        const QString metaPath =
-          dir.filePath(entry.id + QStringLiteral(".meta"));
-        if (QFile::exists(metaPath)) {
-            continue;
-        }
-        if (!entry.image.isNull()) {
-            entry.image.save(dir.filePath(entry.id + QStringLiteral(".png")),
-                             "PNG");
-        } else {
-            QFile file(dir.filePath(entry.id + QStringLiteral(".txt")));
-            if (file.open(QIODevice::WriteOnly)) {
-                file.write(entry.text.toUtf8());
+        const QString payloadPath =
+          dir.filePath(entry.id + (entry.image.isNull()
+                                     ? QStringLiteral(".txt")
+                                     : QStringLiteral(".png")));
+        bool payloadOk = QFile::exists(payloadPath);
+        if (!payloadOk) {
+            if (!entry.image.isNull()) {
+                payloadOk = entry.image.save(payloadPath, "PNG");
+            } else {
+                QFile file(payloadPath);
+                const QByteArray utf8 = entry.text.toUtf8();
+                payloadOk = file.open(QIODevice::WriteOnly) &&
+                            file.write(utf8) == utf8.size();
+            }
+            if (payloadOk) {
+                QFile::setPermissions(payloadPath, ownerOnly);
+            } else {
+                // A failed or truncated payload must not leave a partial
+                // file that would block retries or load incomplete data.
+                QFile::remove(payloadPath);
             }
         }
+        if (!payloadOk) {
+            continue;
+        }
+        // Rewrite meta every time: re-added entries keep their id but get
+        // a fresh createdUtc, which must reach disk for restore ordering.
+        const QString metaPath =
+          dir.filePath(entry.id + QStringLiteral(".meta"));
         QSettings meta(metaPath, QSettings::IniFormat);
         meta.setValue(QStringLiteral("createdUtc"),
                       entry.createdUtc.toString(Qt::ISODateWithMs));
         meta.setValue(QStringLiteral("digest"),
                       QString::fromLatin1(entry.digest.toHex()));
+        meta.sync();
+        QFile::setPermissions(metaPath, ownerOnly);
     }
 }
 
 QVector<RackEntry> loadEntries(const QString& name)
 {
-    const QDir dir = rackStorageDir(name);
+    QDir dir = rackStorageDir(name);
     QVector<RackEntry> loaded;
     for (const QString& metaName :
          dir.entryList({ QStringLiteral("*.meta") }, QDir::Files)) {
@@ -103,6 +126,10 @@ QVector<RackEntry> loadEntries(const QString& name)
         if (entry.createdUtc.isValid() &&
             (!entry.image.isNull() || !entry.text.isEmpty())) {
             loaded.append(entry);
+        } else {
+            // Meta without a readable payload is unrecoverable; drop it so
+            // it does not pin the entry id or confuse later persists.
+            dir.remove(metaName);
         }
     }
     std::sort(loaded.begin(),

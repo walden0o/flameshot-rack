@@ -1490,8 +1490,8 @@ Please solve them manually in the configuration file.</source>
         <translation>在晾衣架中保留剪贴板历史</translation>
     </message>
     <message>
-        <source>Memory only, skipped for passwords; images can be re-copied</source>
-        <translation>仅保存在内存中，自动跳过密码管理器内容；图片可重新复制</translation>
+        <source>Persisted across restarts until cleared; skipped for passwords; images can be re-copied</source>
+        <translation>保存在本地直到手动清空，自动跳过密码管理器内容；图片可重新复制</translation>
     </message>
     <message>
         <source>Position</source>
