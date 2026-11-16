@@ -828,8 +828,13 @@ void RackWindow::changeEvent(QEvent* event)
 
 void RackWindow::closeEvent(QCloseEvent* event)
 {
-    event->ignore();
+    // The rack is always-on: closing only dismisses the panel. The event
+    // must still be accepted — ignoring it vetoes QApplication::quit.
+    event->accept();
     dismiss();
+    // QWidget hides the window after an accepted close, so restoring an
+    // always-mode panel must happen after closeEvent returns.
+    QTimer::singleShot(0, this, [this] { updateVisibility(); });
 }
 
 void RackWindow::mousePressEvent(QMouseEvent* event)
