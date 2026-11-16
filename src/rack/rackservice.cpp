@@ -68,6 +68,7 @@ void RackService::setEnabled(bool enabled)
     if (!m_window) {
         return;
     }
+    m_window->setServiceEnabled(enabled);
     if (enabled) {
         m_window->show();
     } else {

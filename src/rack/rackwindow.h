@@ -42,6 +42,7 @@ public:
     void showClipboardHistory();
     void setDisplayMode(const QString& mode);
     void setCaptureActive(const QString& source, bool active);
+    void setServiceEnabled(bool enabled);
     void toggle();
     void expand(bool activate = false);
     void dismiss();
@@ -85,6 +86,7 @@ private:
     View m_view = View::Screenshots;
     QString m_mode = QStringLiteral("hover");
     bool m_expanded = false;
+    bool m_serviceEnabled = true;
     bool m_clipboardEnabled = false;
     bool m_refreshPending = false;
     int m_interactionDepth = 0;

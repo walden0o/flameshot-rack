@@ -328,12 +328,17 @@ void RackWindow::setCaptureActive(const QString& source, bool active)
     if (!m_captureSources.isEmpty()) {
         m_animation.stop();
         hide();
-    } else {
+    } else if (m_serviceEnabled) {
         m_expanded = m_mode == QStringLiteral("always");
         setGeometry(targetGeometry(m_expanded));
         m_body->setVisible(m_expanded);
         show();
     }
+}
+
+void RackWindow::setServiceEnabled(bool enabled)
+{
+    m_serviceEnabled = enabled;
 }
 
 void RackWindow::toggle()
