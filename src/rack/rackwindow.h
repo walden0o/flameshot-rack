@@ -41,6 +41,8 @@ public:
     [[nodiscard]] View view() const;
     void showClipboardHistory();
     void setDisplayMode(const QString& mode);
+    void setPosition(const QString& position);
+    void updateVisibility();
     void setCaptureActive(const QString& source, bool active);
     void setServiceEnabled(bool enabled);
     void toggle();
@@ -85,6 +87,7 @@ private:
     QScreen* m_screen;
     View m_view = View::Screenshots;
     QString m_mode = QStringLiteral("hover");
+    QString m_position = QStringLiteral("right");
     bool m_expanded = false;
     bool m_serviceEnabled = true;
     bool m_clipboardEnabled = false;

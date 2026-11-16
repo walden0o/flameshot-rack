@@ -9,6 +9,7 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QGroupBox>
+#include <QHBoxLayout>
 #include <QImageWriter>
 #include <QLabel>
 #include <QLineEdit>
@@ -152,6 +153,8 @@ void GeneralConf::_updateComponents(bool allowEmptySavePath)
     m_rackClipboardHistory->setChecked(config.rackClipboardHistory());
     m_rackDisplayMode->setCurrentIndex(
       config.rackDisplayMode() == QStringLiteral("always") ? 1 : 0);
+    m_rackPosition->setCurrentIndex(std::max(
+      0, m_rackPosition->findData(config.rackPosition())));
 #endif
 }
 
@@ -739,6 +742,20 @@ void GeneralConf::initRackSettings()
           m_rackDisplayMode->currentData().toString());
     });
     layout->addWidget(m_rackDisplayMode);
+
+    auto* positionRow = new QHBoxLayout;
+    auto* positionLabel = new QLabel(tr("Position"), group);
+    m_rackPosition = new QComboBox(group);
+    m_rackPosition->addItem(tr("Left"), QStringLiteral("left"));
+    m_rackPosition->addItem(tr("Center"), QStringLiteral("center"));
+    m_rackPosition->addItem(tr("Right"), QStringLiteral("right"));
+    connect(m_rackPosition, &QComboBox::currentIndexChanged, this, [this]() {
+        ConfigHandler().setRackPosition(
+          m_rackPosition->currentData().toString());
+    });
+    positionRow->addWidget(positionLabel);
+    positionRow->addWidget(m_rackPosition, 1);
+    layout->addLayout(positionRow);
 
     m_rackClipboardHistory =
       new QCheckBox(tr("Keep clipboard history in the rack"), group);

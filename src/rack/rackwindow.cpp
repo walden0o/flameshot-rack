@@ -276,6 +276,9 @@ RackWindow::RackWindow(RackContentModel& model,
     m_animation.setEasingCurve(QEasingCurve::OutCubic);
     connect(&m_animation, &QPropertyAnimation::finished, this, [this] {
         m_body->setVisible(m_expanded);
+        if (!m_expanded) {
+            updateVisibility();
+        }
     });
     m_closeTimer.setSingleShot(true);
     m_closeTimer.setInterval(RackCollapseDelayMs);
@@ -341,6 +344,28 @@ void RackWindow::setDisplayMode(const QString& mode)
     }
 }
 
+void RackWindow::setPosition(const QString& position)
+{
+    if (m_position == position) {
+        return;
+    }
+    m_position = position;
+    m_animation.stop();
+    setGeometry(targetGeometry(m_expanded));
+}
+
+// Hover mode keeps the window fully hidden while collapsed: it only
+// exists on screen while expanded. Always mode stays visible.
+void RackWindow::updateVisibility()
+{
+    if (m_serviceEnabled &&
+        (m_expanded || m_mode == QStringLiteral("always"))) {
+        show();
+    } else {
+        hide();
+    }
+}
+
 void RackWindow::setCaptureActive(const QString& source, bool active)
 {
     if (active) {
@@ -356,7 +381,7 @@ void RackWindow::setCaptureActive(const QString& source, bool active)
         m_expanded = m_mode == QStringLiteral("always");
         setGeometry(targetGeometry(m_expanded));
         m_body->setVisible(m_expanded);
-        show();
+        updateVisibility();
     }
 }
 
@@ -443,8 +468,10 @@ QRect RackWindow::targetGeometry(bool expanded) const
 {
     const QRect screen =
       m_screen ? m_screen->geometry() : QRect(0, 0, 1024, 768);
-    return rackTargetGeometry(
-      screen, m_screen ? m_screen->availableGeometry() : screen, expanded);
+    return rackTargetGeometry(screen,
+                              m_screen ? m_screen->availableGeometry() : screen,
+                              expanded,
+                              rackPositionFromName(m_position));
 }
 
 bool RackWindow::pointerInHoverArea(const QPoint& cursor) const
@@ -476,7 +503,7 @@ void RackWindow::animate(bool expanded)
 
 void RackWindow::trackPointer()
 {
-    if (!isVisible() || !m_captureSources.isEmpty()) {
+    if (!m_serviceEnabled || !m_captureSources.isEmpty()) {
         return;
     }
     const QPoint cursor = QCursor::pos();
@@ -486,7 +513,8 @@ void RackWindow::trackPointer()
         .expanded = m_expanded,
         .inHotZone = hovered && rackInHotZone(hovered->geometry(),
                                               hovered->availableGeometry(),
-                                              cursor),
+                                              cursor,
+                                              rackPositionFromName(m_position)),
         .inHoverArea = m_expanded && pointerInHoverArea(cursor),
         .interacting = interacting(),
         .collapsePending = m_closeTimer.isActive()

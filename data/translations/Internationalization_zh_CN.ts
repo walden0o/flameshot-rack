@@ -1493,6 +1493,18 @@ Please solve them manually in the configuration file.</source>
         <source>Memory only, skipped for passwords; images can be re-copied</source>
         <translation>仅保存在内存中，自动跳过密码管理器内容；图片可重新复制</translation>
     </message>
+    <message>
+        <source>Position</source>
+        <translation>位置</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>左侧</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>右侧</translation>
+    </message>
 </context>
 <context>
     <name>HistoryWidget</name>

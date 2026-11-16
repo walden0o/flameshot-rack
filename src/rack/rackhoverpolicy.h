@@ -18,15 +18,26 @@ enum class RackDisplayMode
     Always
 };
 
+enum class RackPosition
+{
+    Left,
+    Center,
+    Right
+};
+
 // Unknown names fall back to hover, matching the configuration default.
 [[nodiscard]] RackDisplayMode rackDisplayModeFromName(QStringView name);
+// Unknown names fall back to right, matching the configuration default.
+[[nodiscard]] RackPosition rackPositionFromName(QStringView name);
 // `screen` is the full screen geometry; `available` excludes the panel area.
 [[nodiscard]] QRect rackTargetGeometry(const QRect& screen,
                                        const QRect& available,
-                                       bool expanded);
+                                       bool expanded,
+                                       RackPosition position);
 [[nodiscard]] bool rackInHotZone(const QRect& screen,
                                  const QRect& available,
-                                 const QPoint& cursor);
+                                 const QPoint& cursor,
+                                 RackPosition position);
 // The band above the window up to the screen edge counts as inside the rack.
 [[nodiscard]] bool rackInHoverArea(const QRect& window,
                                    const QRect& screen,

@@ -1412,6 +1412,18 @@ Please solve them manually in the configuration file.</source>
         <source>Memory only, skipped for passwords; images can be re-copied</source>
         <translation>僅保存在記憶體中，自動略過密碼管理器內容；圖片可重新複製</translation>
     </message>
+    <message>
+        <source>Position</source>
+        <translation>位置</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>左側</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>右側</translation>
+    </message>
 </context>
 <context>
     <name>HistoryWidget</name>

@@ -131,6 +131,7 @@ FlameshotDaemon::FlameshotDaemon()
                 setRackEnabled(config.rackEnabled());
                 if (m_rack && m_rack->window()) {
                     m_rack->window()->setDisplayMode(config.rackDisplayMode());
+                    m_rack->window()->setPosition(config.rackPosition());
                     m_rack->window()->setClipboardHistoryEnabled(
                       config.rackClipboardHistory());
                 }

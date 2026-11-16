@@ -161,6 +161,7 @@ private:
     QCheckBox* m_rackEnabled;
     QCheckBox* m_rackClipboardHistory;
     QComboBox* m_rackDisplayMode;
+    QComboBox* m_rackPosition;
     QSpinBox* m_uploadHistoryMax;
     QSpinBox* m_undoLimit;
     QComboBox* m_setSaveAsFileExtension;

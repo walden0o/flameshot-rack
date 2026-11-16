@@ -96,6 +96,7 @@ static QMap<class QString, QSharedPointer<ValueHandler>>
     OPTION("useJpgForClipboard"          ,Bool               ( false         )),
     OPTION("rackEnabled"                 ,Bool               ( true          )),
     OPTION("rackDisplayMode"             ,String             ( "hover"       )),
+    OPTION("rackPosition"                ,String             ( "right"       )),
     OPTION("rackClipboardHistory"        ,Bool               ( false         )),
 #if defined(Q_OS_MACOS)
     OPTION("useNativeFullscreen"         ,Bool               ( false         )),

@@ -125,6 +125,7 @@ public:
     CONFIG_GETTER_SETTER(useJpgForClipboard, setUseJpgForClipboard, bool)
     CONFIG_GETTER_SETTER(rackEnabled, setRackEnabled, bool)
     CONFIG_GETTER_SETTER(rackDisplayMode, setRackDisplayMode, QString)
+    CONFIG_GETTER_SETTER(rackPosition, setRackPosition, QString)
     CONFIG_GETTER_SETTER(rackClipboardHistory, setRackClipboardHistory, bool)
 #if defined(Q_OS_MACOS)
     CONFIG_GETTER_SETTER(useNativeFullscreen, setUseNativeFullscreen, bool)

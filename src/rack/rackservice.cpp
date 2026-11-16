@@ -48,6 +48,7 @@ void RackService::ensureStarted()
     }
     setEnabled(ConfigHandler().rackEnabled());
     m_window->setDisplayMode(ConfigHandler().rackDisplayMode());
+    m_window->setPosition(ConfigHandler().rackPosition());
 }
 
 void RackService::addScreenshot(const QImage& image)
@@ -58,7 +59,7 @@ void RackService::addScreenshot(const QImage& image)
     ensureStarted();
     m_model.add(QString(), image);
     if (m_enabled) {
-        m_window->show();
+        m_window->updateVisibility();
     }
 }
 
@@ -69,11 +70,7 @@ void RackService::setEnabled(bool enabled)
         return;
     }
     m_window->setServiceEnabled(enabled);
-    if (enabled) {
-        m_window->show();
-    } else {
-        m_window->hide();
-    }
+    m_window->updateVisibility();
 }
 
 bool RackService::enabled() const
